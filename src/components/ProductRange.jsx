@@ -29,7 +29,7 @@ const products = [
         title: "Face Care",
         description: "Gentle yet effective facial care for all skin types",
         items: ["Face Serum", "Body Butter"],
-        buttonText: "Explore Body Care",
+        buttonText: "Explore Face Care",
         bgImage: image4
     },
 
@@ -56,7 +56,7 @@ export default function ProductRange() {
         <section className="py-16 px-4 bg-[#FEFCE5]">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-12">
-                    <h2 className="text-4xl md:text-5xl font-serif text-amber-900 mb-4 mt-4 font-bold">Our Product Range</h2>
+                    <h2 className="text-4xl md:text-4xl font-serif text-amber-900 mb-4 mt-4 font-bold">Our Product Range</h2>
                     <p className="text-lg text-amber-700 max-w-2xl mx-auto leading-relaxed">From body to hair, face to men's care - discover the perfect natural
                         skincare solution crafted with love in Ghana.</p>
                 </div>
@@ -140,7 +140,7 @@ export default function ProductRange() {
                                     className="w-full h-full object-cover"/>
                                 </div>
                                 <h4 className="font-semibold text-amber-900 mb-2 font-serif">Shea Body Butter</h4>
-                                <p className="text-amber-700 text-sm">From GH₵60</p>
+                                <p className="text-amber-700 text-sm font-bold">From GH₵60</p>
                             </div>
 
                             <div className="bg-[#FCF6ED] rounded-xl p-4 shadow-md">
@@ -151,7 +151,7 @@ export default function ProductRange() {
                                     className="w-full h-full object-cover"/>
                                 </div>
                                 <h4 className="font-semibold text-amber-900 mb-2 font-serif">Hair Treatment</h4>
-                                <p className="text-amber-700 text-sm">From GH₵50</p>
+                                <p className="text-amber-700 text-sm font-bold">From GH₵50</p>
                             </div>
                         </div>
                     </div>
