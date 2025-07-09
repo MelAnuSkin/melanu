@@ -1,5 +1,6 @@
 import Navbar from "../components/Navbar";
 import { ChevronLeft, Eye } from "lucide-react";
+import Footer from "../components/Footer";
 
 
 
@@ -7,7 +8,7 @@ export default function SignUp() {
     return (
         <>
             <Navbar />
-            <div className="bg-[#FFFFFF] flex items-center justify-center">
+            <div className="bg-[#FFFFFF] flex items-center justify-center mb-40">
                 <div className="h-screen mt-15">
                     <button className="flex items-center text-amber-700 hover:text-amber-800 mb-8 transition-colors">
                         <ChevronLeft size={16} />
@@ -124,26 +125,12 @@ export default function SignUp() {
                                 <a href="#" className="text-amber-800 hover:text-amber-500 font-medium"> Sign in</a>
                                 </p>
                             </div>
-
-
-
-
-
-
-
-
-
-
                         </div>
-
-
-
                     </div>
-
-
-
                 </div>
             </div>
+
+            <Footer />
 
 
 
