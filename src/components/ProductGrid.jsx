@@ -58,7 +58,7 @@ const displayProducts = products || defaultProducts;
               key={product.id} 
               className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:scale-105 transform transition-transform duration-300"
             >
-              {/* Product Image */}
+              
               <div className="relative">
                 <img 
                   src={product.bgImage} 
@@ -67,7 +67,7 @@ const displayProducts = products || defaultProducts;
                 />
               </div>
               
-              {/* Product Info */}
+
 
               <div className="p-4">
                 <div className="text-xs text-gray-600 font-medium mb-2 uppercase tracking-wide">
@@ -78,13 +78,13 @@ const displayProducts = products || defaultProducts;
                   {product.name}
                 </h3>
                 
-                {/* Price */}
+                
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-semibold text-amber-900">
                     GH₵{product.price}
                   </span>
                   
-                  {/* Add to Cart Button */}
+                 
                   <button className="bg-amber-600 hover:bg-amber-700 text-white cursor-pointer px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2">
                     <ShoppingCart size={16} />
                     Add to Cart

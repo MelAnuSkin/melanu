@@ -1,5 +1,6 @@
 import logo from "../assets/images/logomelanu.png";
 import { ShoppingCart, User } from "lucide-react";
+import { Link } from "react-router";
 
 
 
@@ -23,11 +24,15 @@ export default function Navbar() {
                     <div className="hidden md:flex items-center space-x-8">
                         <ul className="flex items-center space-x-7">
                             <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
-                                Home</li>
+                            <Link to="/"> 
+                            Home</Link></li>
+                                
                             <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
-                                About</li>
+                                <Link to="/about">About</Link></li>
+                                
                             <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
-                                Products</li>
+                               <Link to="/products">
+                               Products</Link></li>
                             <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
                                 Blog</li>
                             <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
@@ -39,10 +44,11 @@ export default function Navbar() {
                         <button className="text-amber-800 hover:text-amber-900 transition-colors cursor-pointer">
                             <ShoppingCart size={18} />
                         </button>
+                        <Link to="/login">
                         <button className="bg-amber-700 text-white px-5 py-2 rounded-md hover:bg-amber-800 transition-colors flex items-center space-x-2 cursor-pointer">
                             <User size={14} />
                             <span>Sign In</span>
-                        </button>
+                        </button></Link>
                     </div>
                 </div>
             </div>

@@ -5,7 +5,7 @@ import logo from "../assets/images/logomelanu.png";
 
 export default function Footer() {
     return (
-        <footer className="bg-[#973C00] text-amber-100">
+        <footer className="bg-[#573E29] text-amber-100">
             <div className="max-w-7xl mx-auto px-6 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div className="md:col-span-1">

@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import { ChevronLeft, Eye } from "lucide-react";
 import Footer from "../components/Footer";
+import { Link } from "react-router";
 
 
 
@@ -12,10 +13,11 @@ export default function Login() {
 
             <div className="bg-[#FFFFFF] flex items-center justify-center mb-10">
                 <div className="h-screen w-screen mt-15" >
+                    <Link to="/">
                     <button className="flex items-center text-amber-700 hover:text-amber-800 mb-8 transition-colors cursor-pointer ml-96">
                         <ChevronLeft size={16} />
                         <span className="text-sm">Back to Home</span>
-                    </button>
+                    </button></Link>
 
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-bold text-amber-800 font-mono mb-2">
@@ -113,7 +115,7 @@ export default function Login() {
                                     <div className="text-center mt-6">
                                         <p className="text-sm text-amber-600">
                                             Don't have an account?
-                                            <a href="#" className="text-amber-800 hover:text-amber-500 font-medium"> Sign Up</a>
+                                           <Link to="/signup"><a href="#" className="text-amber-800 hover:text-amber-500 font-medium"> Sign Up</a></Link>
                                         </p>
                                     </div>
                                 </div>

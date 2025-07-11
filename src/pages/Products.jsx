@@ -2,6 +2,7 @@ import UserNav from "../components/UserNav"
 import { User, Search } from "lucide-react"
 import { ChevronDown } from "lucide-react"
 import ProductGrid from "../components/ProductGrid"
+import Footer from "../components/Footer"
 
 
 
@@ -13,7 +14,7 @@ export default function Products() {
         <>
             <UserNav />
 
-            <div className="min-h-scree bg-[#F0D09F]">
+            <div className="bg-[#F0D09F]">
                 <div className="py-16 px-4 bg-amber-100">
                     <div className="max-w-4xl mx-auto text-center">
                         <h1 className="text-4xl md:text-5xl font-serif text-amber-800 mb-6 font-bold">Shop Natural Skincare</h1>
@@ -71,6 +72,8 @@ export default function Products() {
             <div className="border-t border-amber-100 mt-7 mb-5"></div>
 
             <ProductGrid />
+
+            <Footer />
 
 
 
