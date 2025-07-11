@@ -1,0 +1,44 @@
+import logo from "../assets/images/logomelanu.png";
+import { ShoppingCart, User } from "lucide-react";
+
+
+
+
+export default function UserNav() {
+    return(
+        <nav className="bg-[#FEFCE9] border-b border-amber-200">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center h-18">
+                            <div className="flex items-center">
+                                <div className="">
+                                    <img src={logo} alt="logomelanu" className="w-12 h-12 object-contain" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-amber-800 font-bold text-lg">MelAnu</span>
+                                </div>
+                            </div>
+                            <div className="hidden md:flex items-center space-x-8">
+                                <ul className="flex items-center space-x-7">
+                                    <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
+                                        Home</li>
+                                    <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
+                                        About</li>
+                                    <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
+                                        Products</li>
+                                    <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
+                                        Blog</li>
+                                    <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
+                                        Contact</li>
+                                </ul>
+                            </div>
+        
+                            <div className="flex items-center space-x-6">
+                                <button className="text-amber-800 hover:text-amber-900 transition-colors cursor-pointer">
+                                    <ShoppingCart size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+    )
+}
