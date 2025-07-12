@@ -1,6 +1,8 @@
 import Navbar from "../components/Navbar"
+import about from "../assets/images/about.jpg";
+import { MicVocal } from "lucide-react";
 import anita from "../assets/images/anita.jpg";
-
+import Footer from "../components/Footer";
 
 
 
@@ -33,9 +35,9 @@ export default function About() {
                                 <div className="rounded-3xl overflow-hidden shadow-2xl">
                                     <div className="aspect-[4/3] relative">
                                         <img
-                                            src={anita}
+                                            src={about}
                                             alt="about image"
-                                            className="w-full h-dvh object-cover rounded-2xl" />
+                                            className="w-full h-full object-cover rounded-2xl" />
                                     </div>
                                 </div>
                             </div>
@@ -98,8 +100,72 @@ export default function About() {
                         </div>
                     </div>
                 </div>
-
             </div>
+
+            <div className="bg-[#F7F3F0] py-16 px-4">
+                <div className="max-w-6xl mx-auto">
+                    <h3 className="text-3xl md:text-4xl font-serif font-bold text-center text-amber-900 mb-16">A Note From Our Founder</h3>
+                    <div className="grid lg:grid-cols-2 gap-12 items-center">
+                        <div className="bg-white rounded-2xl shadow-lg p-8 relative">
+                            <div className="absolute top-6 right-6 w-8 h-8 text-amber-500">
+                                <MicVocal size={20} />
+                            </div>
+                            <div className="text-gray-600 italic text-lg leading-relaxed">
+                                "Growing up in Ghana, I watched my grandmother carefully prepare shea butter and natural oils that kept our family's skin healthy and radiant. These weren't just beauty products—they were traditions, stories, and wisdom passed down through generations.
+                                <br /><br />
+                                When I moved away for my studies, I struggled to find skincare products that worked for my skin the way my grandmother's remedies did. That's when I realized the world needed access to these authentic African beauty secrets, prepared with the same care and tradition I grew up with.
+                                <br /><br />
+                                MelAnu isn't just about selling products—it's about honoring our heritage, empowering the women who make these treasures possible, and sharing the gift of natural, effective skincare with everyone who believes in the power of authentic beauty"
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center">
+                            <img
+                                src={anita}
+                                alt="anita"
+                                className="rounded-2xl shadow-lg w-full max-w-md h-dvh object-cover" />
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-white py-16 px-4 mt-10">
+                <div className="max-w-4xl mx-auto">
+                    <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+                        <div className="flex justify-center mb-5">
+                            <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center">
+                                <svg viewBox="0 0 24 24" fill="white" className="w-8 h-8">
+                                    <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-serif text-amber-800 mb-6">Join Our Community</h2>
+                        <p className="text-amber-600 text-lg mb-8 max-w-2xl mx-auto">
+                            Be the first to discover new products, wellness tips, and stories from our
+                            SheaStrong community. Plus, get 15% off your first order!
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto mb-4">
+                            <input
+                                type="email"
+                                placeholder="Enter your email address"
+                                className="flex-1 px-4 py-3 border border-amber-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
+
+                            <button className="px-8 py-2 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-900 cursor-pointer transition-colors">
+                                Join Now
+                            </button>
+                        </div>
+                        <p className="text-amber-500 text-sm">
+                            We respect your privacy. Unsubscribe at any time.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
+            <Footer />
+
+
 
 
         </>
