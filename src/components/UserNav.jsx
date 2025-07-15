@@ -25,21 +25,26 @@ export default function UserNav() {
                                     Home</Link>
                             </li>
                             <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
-                                About</li>
+                                <Link to="/about">
+                                About</Link></li>
+
                             <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
                                 <Link to="/products">
                                Products</Link></li>
+
                             <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
                                 Blog</li>
+
                             <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
                                 Contact</li>
                         </ul>
                     </div>
 
                     <div className="flex items-center space-x-6">
+                        <Link to="/cart">
                         <button className="text-amber-800 hover:text-amber-900 transition-colors cursor-pointer">
                             <ShoppingCart size={18} />
-                        </button>
+                        </button></Link>
                     </div>
                 </div>
             </div>

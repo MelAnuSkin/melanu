@@ -41,9 +41,12 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center space-x-6">
+                        
+                        <Link to="/cart">
                         <button className="text-amber-800 hover:text-amber-900 transition-colors cursor-pointer">
                             <ShoppingCart size={18} />
-                        </button>
+                        </button></Link>
+
                         <Link to="/login">
                         <button className="bg-amber-700 text-white px-5 py-2 rounded-md hover:bg-amber-800 transition-colors flex items-center space-x-2 cursor-pointer">
                             <User size={14} />

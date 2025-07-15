@@ -6,6 +6,7 @@ import image9 from "../assets/images/image9.jpg";
 import { Plus, Trash } from "lucide-react";
 import { Truck } from "lucide-react";
 import Footer from "../components/Footer";
+import { Link } from "react-router";
 
 
 
@@ -54,10 +55,12 @@ export default function Cart() {
             <div className="min-h-screen bg-white">
                 <div className="bg-[#F0D09F] px-4 py-16">
                     <div className="max-w-6xl mx-auto">
+
+                        <Link to="/products">
                         <button className="flex items-center text-amber-800 font-mono hover:bg-[#EADAC8] hover:rounded-full hover:px-3 cursor-pointer mb-4">
                             <ArrowLeft className="w-5 h-5 mr-2" />
                             Continue Shopping
-                        </button>
+                        </button></Link>
                         <h1 className="text-4xl font-bold font-mono text-amber-800">Shopping Cart</h1>
                     </div>
                 </div>
@@ -105,7 +108,7 @@ export default function Cart() {
                         </div>
 
                         <div className="lg:col-span-1">
-                            <div className="bg-white rounded-lg p-6 shadow-sm border border-amber-500 top-8">
+                            <div className="bg-white rounded-lg p-6 shadow-sm border border-amber-500 sticky top-8">
                                 <h2 className="text-xl font-mono font-bold text-amber-700 mb-6">Order Summary</h2>
 
                                 <div className="space-y-4 mb-6">
@@ -130,8 +133,9 @@ export default function Cart() {
                                     </div>
                                 </div>
 
+                                    <Link to="/checkout">
                                 <button className="w-full bg-amber-600 text-white cursor-pointer py-3 rounded-lg font-medium hover:bg-amber-800 transition-colors">
-                                    Proceed to Checkout</button>
+                                    Proceed to Checkout</button></Link>
 
                                 <div className="mt-4 text-center text-sm text-amber-500">
                                     <p>Secure checkout with 256-bit SSL encryption</p>
