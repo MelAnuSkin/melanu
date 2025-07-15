@@ -5,6 +5,7 @@ import About from "./pages/About";
 import SignUp from "./pages/SignUp";
 import OTP from "./pages/OTP";
 import Products from "./pages/Products";
+import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 
 
@@ -17,6 +18,7 @@ const melAnuRouter = createBrowserRouter([
   { path: '/about', element: <About /> },
   { path: '/otp', element: <OTP /> },
   { path: '/products', element: <Products /> },
+  { path: '/cart', element: <Cart /> },
   { path: '/*', element: <NotFound /> },
 ]);
 
