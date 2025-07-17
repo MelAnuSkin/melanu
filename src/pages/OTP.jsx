@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { ChevronLeft } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { verifyOTP } from "../api/client.js"; // Update path as needed
+import { verifyOTP } from "../api/client.js"; 
 
 export default function OTP() {
     const navigate = useNavigate();
@@ -20,7 +20,7 @@ export default function OTP() {
             newOtp[index] = value;
             setOtp(newOtp);
 
-            // Move to next input
+            
             if (value && index < 5) {
                 inputRefs.current[index + 1].focus();
             }
@@ -47,7 +47,7 @@ export default function OTP() {
 
         try {
             await verifyOTP(email, otpCode);
-            navigate('/');
+            navigate('/userpage');
         } catch (err) {
             setError(err.response?.data?.message || 'Invalid OTP code');
         } finally {

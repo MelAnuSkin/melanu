@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import { ChevronLeft, Eye } from "lucide-react";
 import Footer from "../components/Footer";
 import { Link } from "react-router";
-import { signupUser } from "../api/client.js"; // Update path as needed
+import { signupUser } from "../api/client.js";
 
 export default function SignUp() {
     const navigate = useNavigate();

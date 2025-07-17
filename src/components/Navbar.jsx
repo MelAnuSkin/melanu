@@ -34,9 +34,11 @@ export default function Navbar() {
                                <Link to="/products">
                                Products</Link></li>
                             <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
-                                Blog</li>
+                                <Link to="/blog">
+                                Blog</Link></li>
                             <li className="text-amber-800 hover:text-amber-900 font-medium transition-colors cursor-pointer">
-                                Contact</li>
+                                <Link to="/contact">
+                                Contact</Link></li>
                         </ul>
                     </div>
 

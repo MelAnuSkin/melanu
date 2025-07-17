@@ -19,4 +19,9 @@ export const verifyOTP = async (email, otp) => {
     return response;
 };
 
+export const loginUser = async (email, password) => {
+    const response = await apiClient.post('/api/auth/login', { email, password });
+    return response;
+};
+
 export const imageBaseURL = import.meta.env.VITE_IMAGE_BASE_URL;

@@ -1,4 +1,5 @@
 import logo from "../assets/images/logomelanu.png";
+import { Link } from "react-router";
 
 
 
@@ -35,11 +36,21 @@ export default function Footer() {
                     <div>
                         <h4 className="text-lg font-bold text-amber-100 mb-4">Company</h4>
                         <ul className="space-y-2">
-                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">Home</li>
-                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">About</li>
-                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">Product</li>
-                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">Blog</li>
-                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">Contact</li>
+                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">
+                                <Link to="/">
+                                Home</Link></li>
+                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">
+                                <Link to="/about">
+                                About</Link></li>
+                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">
+                                <Link to="/products">
+                                Product</Link></li>
+                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">
+                                <Link to="/blog">
+                                Blog</Link></li>
+                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">
+                                <Link to="/contact">
+                                Contact</Link></li>
                         </ul>
                     </div>
 
