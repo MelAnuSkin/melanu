@@ -1,22 +1,39 @@
-import { Clock, Mail, MapPin, Phone } from "lucide-react"
-import Navbar from "../components/Navbar"
-import Footer from "../components/Footer"
-
-
-
-
-
-
-
-
-
-
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import { useState, useEffect } from "react"; 
+import UserNav from "../components/UserNav";
 
 export default function Contact() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    useEffect(() => {
+        const checkAuth = () => {
+            const token = localStorage.getItem('token');
+            const isAuth = localStorage.getItem('isAuthenticated');
+            
+            if (token && isAuth) {
+                setIsAuthenticated(true);
+            } else {
+                setIsAuthenticated(false);
+            }
+        };
+
+        checkAuth();
+
+        window.addEventListener('storage', checkAuth);
+        
+        window.addEventListener('authChanged', checkAuth);
+
+        return () => {
+            window.removeEventListener('storage', checkAuth);
+            window.removeEventListener('authChanged', checkAuth);
+        };
+    }, []);
+
     return (
         <>
-
-            <Navbar />
+            {isAuthenticated ? <UserNav /> : <Navbar />}
+            
             <div className="min-h-screen bg-white">
                 <div className="bg-[#F0D09F] px-4 py-16">
                     <div className="max-w-4xl mx-auto text-center">
@@ -87,7 +104,7 @@ export default function Contact() {
 
                                     <button
                                         type="button"
-                                        className="bg-amber-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-amber-700 transition-colors focus:ring-2 focus:ring-amber-500 outline-none focus:ring-offset-2">Send Message
+                                        className="bg-amber-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-amber-700 transition-colors focus:ring-2 focus:ring-amber-500 outline-none focus:ring-offset-2 cursor-pointer">Send Message
                                     </button>
                                 </div>
                             </div>
@@ -173,7 +190,7 @@ export default function Contact() {
 
                             <div className="bg-white rounded-lg shadow-sm border border-amber-200 p-6" >
                                 <h3 className="font-semibold text-amber-800 mb-3">Do you ship internationally?</h3>
-                                <p className="text-amber-600 text-sm leading-relaxed">Delivery within Accra takes 1-2 days, while other regions in Ghana receive orders within 3-5 business days.We currently ship within Ghana, but international shipping is coming soon. Subscribe to our newsletter for updates.</p>
+                                <p className="text-amber-600 text-sm leading-relaxed">We currently ship within Ghana, but international shipping is coming soon. Subscribe to our newsletter for updates.</p>
                             </div>
 
                             <div className="bg-white rounded-lg shadow-sm border border-amber-200 p-6" >
@@ -186,5 +203,5 @@ export default function Contact() {
             </div>
             <Footer />
         </>
-    )
+    );
 }

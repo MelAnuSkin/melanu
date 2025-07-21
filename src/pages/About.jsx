@@ -1,21 +1,38 @@
-import Navbar from "../components/Navbar"
+import { useState, useEffect } from 'react';
+import Navbar from "../components/Navbar";
+import UserNav from "../components/UserNav";
 import about from "../assets/images/about.jpg";
 import { MicVocal } from "lucide-react";
 import anita from "../assets/images/anita.jpg";
 import Footer from "../components/Footer";
 
-
-
-
-
-
-
 export default function About() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    useEffect(() => {
+        const checkAuth = () => {
+            const token = localStorage.getItem('token');
+            const isAuth = localStorage.getItem('isAuthenticated');
+            
+            if (token && isAuth) {
+                setIsAuthenticated(true);
+            } else {
+                setIsAuthenticated(false);
+            }
+        };
+
+        checkAuth();
+        window.addEventListener('storage', checkAuth);
+        
+        window.addEventListener('authChanged', checkAuth);
+        return () => {
+            window.removeEventListener('storage', checkAuth);
+            window.removeEventListener('authChanged', checkAuth);
+        };
+    }, []);
+
     return (
-
-
         <>
-            <Navbar />
+            {isAuthenticated ? <UserNav /> : <Navbar />}
 
             <div className="bg-[#F0D09F]">
                 <div className="container mx-auto px-6 py-16">
@@ -124,7 +141,6 @@ export default function About() {
                                 src={anita}
                                 alt="anita"
                                 className="rounded-2xl shadow-lg w-full max-w-md h-dvh object-cover" />
-
                         </div>
                     </div>
                 </div>
@@ -162,13 +178,7 @@ export default function About() {
                 </div>
             </div>
 
-
             <Footer />
-
-
-
-
         </>
-
-    )
+    );
 }

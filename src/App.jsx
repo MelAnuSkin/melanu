@@ -10,10 +10,10 @@ import Checkout from "./pages/Checkout";
 import UserPage from "./pages/UserPage";
 import Contact from "./pages/Contact";
 import Blog from "./pages/BLog";
+import ForgotPassword from "./pages/ForgotPassword";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
-
-
-
+import AdminRouteGuard from "./components/AdminRouteGuard";
 
 const melAnuRouter = createBrowserRouter([
   { path: '/', element: <Home /> },
@@ -27,12 +27,13 @@ const melAnuRouter = createBrowserRouter([
   { path: '/userpage', element: <UserPage /> },
   { path: '/contact', element: <Contact /> },
   { path: '/blog', element: <Blog /> },
+  { path: '/forgot-password', element: <ForgotPassword /> },
+  { path: '/admin', element: (<AdminRouteGuard> <Admin /></AdminRouteGuard> )},
   { path: '/*', element: <NotFound /> },
 ]);
 
 function App() {
  
-
   return (
     <>
        <RouterProvider router={melAnuRouter} />

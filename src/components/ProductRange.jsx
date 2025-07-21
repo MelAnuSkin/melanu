@@ -4,6 +4,7 @@ import image4 from "../assets/images/image4.jpg";
 import image5 from "../assets/images/image5.jpg";
 import image6 from "../assets/images/image6.jpg";
 import image7 from "../assets/images/image7.jpg";
+import { Link } from "react-router";
 
 const products = [
     {
@@ -95,10 +96,10 @@ export default function ProductRange() {
                                     ))}
                                 </ul>
 
-
+                                    <Link to="/products">
                                 <button className="w-full py-3 px-4 border-2 border-amber-500 text-amber-600 font-medium rounded-lg hover:bg-amber-500 hover:text-white transition-colors duration-300 cursor-pointer">
                                     {product.buttonText}
-                                </button>
+                                </button></Link>
                             </div>
                         </div>
                     ))}

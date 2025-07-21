@@ -1,11 +1,27 @@
+import { useNavigate } from 'react-router';
 import logo from "../assets/images/logomelanu.png";
 import { LogOut, ShoppingCart, User } from "lucide-react";
 import { Link } from "react-router";
 
-
-
-
 export default function UserNav() {
+    const navigate = useNavigate();
+
+    // Handle logout with custom event
+    const handleLogout = () => {
+        if (window.confirm('Are you sure you want to logout?')) {
+            // Clear all localStorage data
+            localStorage.removeItem('token');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('isAuthenticated');
+            
+            // Dispatch custom event to notify all components about logout
+            window.dispatchEvent(new CustomEvent('authChanged'));
+            
+            navigate('/');
+        }
+    };
+
     return (
         <nav className="bg-[#FEFCE9] border-b border-amber-200">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -44,15 +60,18 @@ export default function UserNav() {
 
                     <div className="flex items-center space-x-6">
                         <Link to="/cart">
-                        <button className="text-amber-800 hover:text-amber-900 transition-colors cursor-pointer">
-                            <ShoppingCart size={18} />
-                        </button></Link>
+                            <button className="text-amber-800 hover:text-amber-900 transition-colors cursor-pointer">
+                                <ShoppingCart size={18} />
+                            </button>
+                        </Link>
 
-                            <Link to="/">
-                        <button className="bg-white px-4 py-1 cursor-pointer rounded-md flex items-center text-red-500 gap-3 border border-red-500">
+                        <button 
+                            onClick={handleLogout}
+                            className="bg-white px-4 py-1 cursor-pointer rounded-md flex items-center text-red-500 gap-3 border border-red-500"
+                        >
                             <LogOut size={16}/>  
                             Logout  
-                        </button></Link>
+                        </button>
                     </div>
                 </div>
             </div>

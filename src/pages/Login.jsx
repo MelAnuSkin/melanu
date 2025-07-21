@@ -9,18 +9,54 @@ export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(""); // Added error state
     const navigate = useNavigate();
+
+    // Admin credentials
+    const ADMIN_EMAIL = "c39744736@gmail.com";
+    const ADMIN_PASSWORD = "admin123";
+
+    const isAdminCredentials = (email, password) => {
+        return email === ADMIN_EMAIL && password === ADMIN_PASSWORD;
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setError(""); // Clear previous errors
+
         try {
+            // Check if admin credentials are being used
+            if (isAdminCredentials(email, password)) {
+                console.log("Admin login detected");
+                
+                // Store admin session data
+                localStorage.setItem('token', 'admin-token'); // You can generate a proper token
+                localStorage.setItem('userRole', 'admin');
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('isAuthenticated', 'true');
+                
+                // Navigate to admin dashboard
+                navigate('/admin');
+                return;
+            }
+
+            // Regular user login via API
             const response = await apiClient.post('/api/auth/login', { email, password });
             console.log("Login successful:", response.data);
+            
+            // Store regular user session data
             localStorage.setItem('token', response.data.token);
+            localStorage.setItem('userRole', 'user');
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('isAuthenticated', 'true');
+            
+            // Navigate to user dashboard
             navigate('/userpage');
+            
         } catch (error) {
             console.error("Login error:", error.response?.data?.message || error.message);
+            setError(error.response?.data?.message || "Login failed. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -36,7 +72,8 @@ export default function Login() {
                         <button className="flex items-center text-amber-700 hover:text-amber-800 mb-8 transition-colors cursor-pointer ml-96">
                             <ChevronLeft size={16} />
                             <span className="text-sm">Back to Home</span>
-                        </button></Link>
+                        </button>
+                    </Link>
 
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-bold text-amber-800 font-mono mb-2">
@@ -52,6 +89,13 @@ export default function Login() {
 
                             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
                                 <h2 className="text-xl font-semibold text-gray-800 mb-6 text-center font-mono">Sign In</h2>
+
+                                {/* Error message display */}
+                                {error && (
+                                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                                        <p className="text-red-600 text-sm">{error}</p>
+                                    </div>
+                                )}
 
                                 <form onSubmit={handleLogin} className="space-y-6">
 
@@ -93,10 +137,11 @@ export default function Login() {
                                                 Remember me
                                             </label>
                                         </div>
-
-                                        <a href="#" className="text-sm text-amber-600 hover:text-amber-700">
-                                            Forgot password?
-                                        </a>
+                                        <Link to="/forgot-password">
+                                            <a href="#" className="text-sm text-amber-600 hover:text-amber-700">
+                                                Forgot password?
+                                            </a>
+                                        </Link>
                                     </div>
 
                                     <button
