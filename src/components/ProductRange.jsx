@@ -127,9 +127,10 @@ export default function ProductRange() {
                                     Supporting 200+ Women Producers
                                 </li>
                             </ul>
+                            <Link to="/products">
                             <button className="bg-amber-700 text-white px-8 py-3 rounded-lg font-medium hover:bg-amber-800 transition-colors duration-300 cursor-pointer">
                                 Shop Premium Collection
-                            </button>
+                            </button></Link>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import Navbar from "../components/Navbar";
-import { ChevronLeft, Eye } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 import Footer from "../components/Footer";
 import { Link } from "react-router";
 import { signupUser } from "../api/client.js";
+
 
 export default function SignUp() {
     const navigate = useNavigate();
@@ -15,6 +16,7 @@ export default function SignUp() {
         password: '',
         acceptedTerms: false
     });
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -117,7 +119,7 @@ export default function SignUp() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                                 <div className="relative">
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         name="password"
                                         value={formData.password}
                                         onChange={handleChange}
@@ -125,8 +127,10 @@ export default function SignUp() {
                                         required
                                         className="w-full px-3 py-2 pr-10 border border-amber-400 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                                     />
-                                    <button type="button" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
-                                        <Eye size={16} />
+                                    <button type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />} 
                                     </button>
                                 </div>
                             </div>
@@ -135,13 +139,15 @@ export default function SignUp() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
                                 <div className="relative">
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         placeholder="Confirm your password"
                                         required
                                         className="w-full px-3 py-2 pr-10 border border-amber-400 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                                     />
-                                    <button type="button" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
-                                        <Eye size={16} />
+                                    <button type="button" 
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />} 
                                     </button>
                                 </div>
                             </div>

@@ -1,3 +1,8 @@
+import { Link } from "react-router"
+
+
+
+
 
 const reviews = [
     {
@@ -11,15 +16,6 @@ const reviews = [
         review: "I've been using MelAnu products for 6 months now and the quality is exceptional. The natural ingredients work wonders on my sensitive skin."
     },
 ]
-
-
-
-
-
-
-
-
-
 
 
 export default function CustomerReview() {
@@ -87,9 +83,11 @@ export default function CustomerReview() {
                     <p className="text-amber-700 mb-6">
                         Join thousands of satisfied customers who love MelAnu products
                     </p>
+
+                    <Link to="/products">
                     <button className="bg-amber-600 cursor-pointer hover:bg-amber-700 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 hover:scale-105 shadow-lg">
                         Shop Now
-                    </button>
+                    </button></Link>
                 </div>
 
             </div>

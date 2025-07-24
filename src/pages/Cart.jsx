@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import Navbar from "../components/Navbar";
+import UserNav from "../components/UserNav"; // Add this import
 import { ArrowLeft, Minus, Plus, Trash, Truck } from "lucide-react";
 import Footer from "../components/Footer";
 import { Link } from "react-router";
@@ -12,18 +13,35 @@ export default function Cart() {
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    // Check authentication on component mount
+    // Check authentication on component mount and listen for changes
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        const isAuth = localStorage.getItem('isAuthenticated');
+        const checkAuth = () => {
+            const token = localStorage.getItem('token');
+            const isAuth = localStorage.getItem('isAuthenticated');
+            
+            if (token && isAuth) {
+                setIsAuthenticated(true);
+            } else {
+                setIsAuthenticated(false);
+                // Redirect to login if not authenticated
+                alert('Please login to view your cart');
+                navigate('/login');
+                return;
+            }
+        };
+        
+        checkAuth();
 
-        if (!token || !isAuth) {
-            alert('Please login to view your cart');
-            navigate('/login');
-            return;
-        }
+        // Listen for storage changes (e.g., login/logout in another tab)
+        window.addEventListener('storage', checkAuth);
+        
+        // Listen for custom auth events
+        window.addEventListener('authChanged', checkAuth);
 
-        setIsAuthenticated(true);
+        return () => {
+            window.removeEventListener('storage', checkAuth);
+            window.removeEventListener('authChanged', checkAuth);
+        };
     }, [navigate]);
 
     // Fetch cart items
@@ -282,7 +300,8 @@ export default function Cart() {
     if (loading) {
         return (
             <>
-                <Navbar />
+                {/* Conditional navigation for loading state */}
+                {isAuthenticated ? <UserNav /> : <Navbar />}
                 <div className="min-h-screen bg-white flex items-center justify-center">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
@@ -296,7 +315,8 @@ export default function Cart() {
 
     return (
         <>
-            <Navbar />
+            {/* Conditional navigation - this is the key change */}
+            {isAuthenticated ? <UserNav /> : <Navbar />}
 
             <div className="min-h-screen bg-white">
                 <div className="bg-[#F0D09F] px-4 py-16">

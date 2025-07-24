@@ -1,4 +1,5 @@
 import image1 from "../assets/images/image1.jpg";
+import { Link } from "react-router";
 
 
 
@@ -25,13 +26,14 @@ export default function Hero() {
                                 </p>
 
                                 <div className="flex flex-col sm:flex-row gap-4">
+                                    <Link to="/products">
                                     <button className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg font-semibold text-lg cursor-pointer">
                                     Shop Our Collection
-                                    </button>
-
+                                    </button></Link>
+                                        <Link to="/about">
                                     <button className="border-2 border-white text-white px-6 py-2 hover:bg-white hover:text-amber-900 rounded-lg font-semibold text-lg cursor-pointer">
                                         Learn More
-                                    </button>
+                                    </button></Link>
                                 </div>
 
                                 <div className="flex flex-wrap gap-6 pt-8">

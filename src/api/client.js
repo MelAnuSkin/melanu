@@ -146,4 +146,11 @@ export const clearCart = async (token) => {
     return response;
 };
 
+export const resetPassword = async (token, password) => {
+    const response = await apiClient.put(`/api/auth/reset-password/${token}`, {
+        password
+    });
+    return response;
+};
+
 export const imageBaseURL = import.meta.env.VITE_IMAGE_BASE_URL;
