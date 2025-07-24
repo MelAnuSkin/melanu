@@ -9,7 +9,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import UserPage from "./pages/UserPage";
 import Contact from "./pages/Contact";
-import Blog from "./pages/BLog";
+import Blog from "./pages/Blog";
 import ForgotPassword from "./pages/ForgotPassword";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
