@@ -11,9 +11,22 @@ export default function ConfirmPassword() {
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
     
-    // Fixed: Uncommented the token extraction
+    
     const [searchParams] = useSearchParams(); 
-    const token = searchParams.get('token'); 
+    let token = searchParams.get('token');
+    
+    
+    if (token && token.includes('/confirm-password?token=')) {
+        
+        const parts = token.split('/confirm-password?token=');
+        if (parts.length > 1) {
+            token = parts[1];
+        }
+    }
+    
+    console.log('Raw token from URL:', searchParams.get('token'));
+    console.log('Processed token:', token);
+    
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -39,7 +52,7 @@ export default function ConfirmPassword() {
         setMessage("");
 
         try {
-            // Fixed: Now passing both token and password
+         
             const response = await resetPassword(token, password);
             
             if (response.status === 200) {
@@ -64,7 +77,6 @@ export default function ConfirmPassword() {
         }
     };
 
-    // Added: Show error if no token is found in URL
     if (!token) {
         return (
             <>

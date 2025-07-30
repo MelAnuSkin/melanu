@@ -186,7 +186,13 @@ export const clearCart = async (token) => {
 };
 
 export const resetPassword = async (token, password) => {
-    const response = await apiClient.get(`/api/auth/reset-password?token=${token}&password=${encodeURIComponent(password)}`);
+    const response = await apiClient.put(`/api/auth/reset-password/${token}`, {
+        password
+    }, {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
     return response;
 };
 
