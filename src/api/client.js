@@ -82,7 +82,7 @@ export const deleteProduct = async (productId, token) => {
     return response;
 };
 
-// ==================== UPDATED CART API FUNCTIONS ====================
+
 
 // Get Cart Items
 export const getCartItems = async (token) => {
@@ -144,27 +144,21 @@ export const updateCartItem = async (productId, quantity, token) => {
     }
 };
 
-// Remove Item from Cart - UPDATED WITH WORKING INTEGRATION
+// Remove Individual Item from Cart - Using /api/carts/clear endpoint
 export const removeFromCart = async (productId, token) => {
     try {
-        console.log('🗑️ Removing item from cart:', productId);
-        
-        // Use consistent apiClient instead of raw axios
-        const response = await apiClient.delete('/api/carts/remove', {
+        console.log('Removing item from cart:', { productId });
+        const response = await apiClient.delete('/api/carts/clear', {
+            data: { productId }, 
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            data: {
-                productId
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
-        
-        console.log('🗑️ Remove response:', response);
+        console.log('Remove from cart response:', response);
         return response;
     } catch (error) {
-        console.error('🗑️ Remove error:', error);
-        console.error('🗑️ Error response:', error.response?.data);
+        console.error('Error in removeFromCart:', error.response?.data || error.message);
         throw error;
     }
 };
@@ -193,7 +187,7 @@ export const resetPassword = async (token, password) => {
             'Content-Type': 'application/json'
         }
     });
-    return response;
+    return response;
 };
 
 export const subscribeToNewsletter = async (email, token) => {

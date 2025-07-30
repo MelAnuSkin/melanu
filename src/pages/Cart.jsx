@@ -5,17 +5,17 @@ import UserNav from "../components/UserNav";
 import { ArrowLeft, Minus, Plus, Trash, Truck } from "lucide-react";
 import Footer from "../components/Footer";
 import { Link } from "react-router";
-import { getCartItems, updateCartItem, removeFromCart } from '../api/client.js';
+import { getCartItems, updateCartItem, removeFromCart, clearCart } from '../api/client.js';
 
 export default function Cart() {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [updating, setUpdating] = useState({}); // Track which items are being updated
-    const [removing, setRemoving] = useState({}); // Track which items are being removed
+    const [updating, setUpdating] = useState({}); 
+    const [removing, setRemoving] = useState({}); 
 
-    // Check authentication on component mount and listen for changes
+    
     useEffect(() => {
         const checkAuth = () => {
             const token = localStorage.getItem('token');
@@ -42,7 +42,7 @@ export default function Cart() {
         };
     }, [navigate]);
 
-    // Normalize cart data structure
+  
     const normalizeCartData = (data) => {
         let cartData = data || [];
         
@@ -118,139 +118,185 @@ export default function Cart() {
 
     // Update quantity with improved error handling for axios responses
     const handleUpdateQuantity = async (productId, newQuantity) => {
-    if (newQuantity < 1) return;
-    if (updating[productId]) return;
+        if (newQuantity < 1) return;
+        if (updating[productId]) return;
 
-    const itemKey = productId;
-    setUpdating(prev => ({ ...prev, [itemKey]: true }));
+        const itemKey = productId;
+        setUpdating(prev => ({ ...prev, [itemKey]: true }));
 
-    // Store original state for rollback
-    const originalItems = [...cartItems];
-    
-    // Optimistically update the UI
-    setCartItems(prev => prev.map(item => 
-        (item.productId === productId || item._id === productId)
-            ? { ...item, quantity: newQuantity }
-            : item
-    ));
+        // Store original state for rollback
+        const originalItems = [...cartItems];
+        
+        // Optimistically update the UI
+        setCartItems(prev => prev.map(item => 
+            (item.productId === productId || item._id === productId)
+                ? { ...item, quantity: newQuantity }
+                : item
+        ));
 
-    try {
-        const token = localStorage.getItem('token');
-        console.log('Updating cart item quantity:', { productId, newQuantity });
-        
-        const response = await updateCartItem(productId, newQuantity, token);
-        console.log('Update quantity response:', response);
-        
-        if (response.status === 200 || response.status === 201 || response.status === 204) {
-            // Successfully updated - no need to refetch immediately
-            window.dispatchEvent(new CustomEvent('cartUpdated'));
-            console.log('Quantity update successful');
-        } else {
-            throw new Error(`Unexpected response status: ${response.status}`);
-        }
-        
-    } catch (error) {
-        console.error('Error updating quantity:', error);
-        
-        // Revert optimistic update on failure
-        setCartItems(originalItems);
-        
-        let errorMessage = 'Failed to update quantity';
-        
-        if (error.response) {
-            const status = error.response.status;
-            const data = error.response.data;
+        try {
+            const token = localStorage.getItem('token');
+            console.log('Updating cart item quantity:', { productId, newQuantity });
             
-            if (status === 404) {
-                // This might be because the productId doesn't match what the server expects
-                errorMessage = 'Product not found in cart. This might be an ID mismatch issue.';
-                console.error('404 Error - Check if productId matches server expectations:', {
-                    sentProductId: productId,
-                    availableItems: cartItems.map(item => ({
-                        productId: item.productId,
-                        _id: item._id
-                    }))
-                });
-            } else if (status === 401) {
-                errorMessage = 'Please login again';
-                setTimeout(() => {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('isAuthenticated');
-                    navigate('/login');
-                }, 1000);
-            } else if (data?.message) {
-                errorMessage += `: ${data.message}`;
+            const response = await updateCartItem(productId, newQuantity, token);
+            console.log('Update quantity response:', response);
+            
+            if (response.status === 200 || response.status === 201 || response.status === 204) {
+             
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
+                console.log('Quantity update successful');
+            } else {
+                throw new Error(`Unexpected response status: ${response.status}`);
             }
-        }
-        
-        alert(errorMessage);
-    } finally {
-        setUpdating(prev => ({ ...prev, [itemKey]: false }));
-    }
-};
- const handleRemoveItem = async (productId) => {
-    if (!window.confirm('Remove this item from cart?')) return;
-    if (removing[productId]) return;
-
-    const itemKey = productId;
-    setRemoving(prev => ({ ...prev, [itemKey]: true }));
-
-    try {
-        const token = localStorage.getItem('token');
-        console.log('🔍 Removing item from cart:', productId);
-        
-        const response = await removeFromCart(productId, token);
-        console.log('🔍 Remove item response:', response);
-        
-        if (response.status === 200 || response.status === 201 || response.status === 204) {
-            // Remove from local state immediately
-            setCartItems(prev => prev.filter(item => 
-                item.productId !== productId && item._id !== productId
-            ));
             
-            // Dispatch event for other components
-            window.dispatchEvent(new CustomEvent('cartUpdated'));
-            console.log('🔍 Item removal successful');
+        } catch (error) {
+            console.error('Error updating quantity:', error);
             
-        } else {
-            throw new Error(`Unexpected response status: ${response.status}`);
-        }
-        
-    } catch (error) {
-        console.error('🔍 Error removing item:', error);
-        
-        let errorMessage = 'Failed to remove item';
-        
-        if (error.response) {
-            const status = error.response.status;
-            const data = error.response.data;
+            // Revert optimistic update on failure
+            setCartItems(originalItems);
             
-            if (status === 404) {
-                errorMessage = 'Item not found in cart. This might be an ID mismatch issue.';
-                console.error('404 Error - Check if productId matches server expectations:', {
-                    sentProductId: productId,
-                    availableItems: cartItems.map(item => ({
-                        productId: item.productId,
-                        _id: item._id
-                    }))
-                });
-            } else if (status === 401) {
-                errorMessage = 'Please login again';
-                setTimeout(() => {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('isAuthenticated');
-                    navigate('/login');
-                }, 1000);
-            } else if (data?.message) {
-                errorMessage += `: ${data.message}`;
+            let errorMessage = 'Failed to update quantity';
+            
+            if (error.response) {
+                const status = error.response.status;
+                const data = error.response.data;
+                
+                if (status === 404) {
+                    
+                    errorMessage = 'Product not found in cart. This might be an ID mismatch issue.';
+                    console.error('404 Error - Check if productId matches server expectations:', {
+                        sentProductId: productId,
+                        availableItems: cartItems.map(item => ({
+                            productId: item.productId,
+                            _id: item._id
+                        }))
+                    });
+                } else if (status === 401) {
+                    errorMessage = 'Please login again';
+                    setTimeout(() => {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('isAuthenticated');
+                        navigate('/login');
+                    }, 1000);
+                } else if (data?.message) {
+                    errorMessage += `: ${data.message}`;
+                }
             }
+            
+            alert(errorMessage);
+        } finally {
+            setUpdating(prev => ({ ...prev, [itemKey]: false }));
         }
+    };
+
+    // Updated handleRemoveItem function to use removeFromCart instead of clearCart
+    const handleRemoveItem = async (productId) => {
+        if (!window.confirm('Remove this item from cart?')) return;
+        if (removing[productId]) return;
+
+        const itemKey = productId;
+        setRemoving(prev => ({ ...prev, [itemKey]: true }));
+
+        // Store original state for rollback
+        const originalItems = [...cartItems];
         
-        alert(errorMessage);
-    } finally {
-        setRemoving(prev => ({ ...prev, [itemKey]: false }));
-    }
-};
+  
+        setCartItems(prev => prev.filter(item => 
+            item.productId !== productId && item._id !== productId
+        ));
+
+        try {
+            const token = localStorage.getItem('token');
+            console.log('Removing item from cart:', productId);
+            
+         
+            const response = await removeFromCart(productId, token);
+            console.log('Remove item response:', response);
+            
+            if (response.status === 200 || response.status === 201 || response.status === 204) {
+                // Dispatch event for other components
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
+                console.log('Item removal successful');
+                
+                // Show success message
+                const removedItem = originalItems.find(item => 
+                    item.productId === productId || item._id === productId
+                );
+                if (removedItem) {
+                    console.log(`Successfully removed "${removedItem.name}" from cart`);
+                }
+                
+            } else {
+                throw new Error(`Unexpected response status: ${response.status}`);
+            }
+            
+        } catch (error) {
+            console.error('🔍 Error removing item:', error);
+            
+           
+            setCartItems(originalItems);
+            
+            let errorMessage = 'Failed to remove item';
+            
+            if (error.response) {
+                const status = error.response.status;
+                const data = error.response.data;
+                
+                if (status === 404) {
+                    errorMessage = 'Item not found in cart. This might be an ID mismatch issue.';
+                    console.error('404 Error - Check if productId matches server expectations:', {
+                        sentProductId: productId,
+                        availableItems: cartItems.map(item => ({
+                            productId: item.productId,
+                            _id: item._id
+                        }))
+                    });
+                } else if (status === 401) {
+                    errorMessage = 'Please login again';
+                    setTimeout(() => {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('isAuthenticated');
+                        navigate('/login');
+                    }, 1000);
+                } else if (data?.message) {
+                    errorMessage += `: ${data.message}`;
+                }
+            }
+            
+            alert(errorMessage);
+        } finally {
+            setRemoving(prev => ({ ...prev, [itemKey]: false }));
+        }
+    };
+
+   
+    const handleClearCart = async () => {
+        if (!window.confirm('Are you sure you want to clear your entire cart?')) return;
+        
+        setLoading(true);
+        
+        try {
+            const token = localStorage.getItem('token');
+            console.log('🔍 Clearing entire cart...');
+            
+            const response = await clearCart(token);
+            console.log('🔍 Clear cart response:', response);
+            
+            if (response.status === 200 || response.status === 201 || response.status === 204) {
+                setCartItems([]);
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
+                console.log('Cart cleared successfully');
+            } else {
+                throw new Error(`Unexpected response status: ${response.status}`);
+            }
+            
+        } catch (error) {
+            console.error('Error clearing cart:', error);
+            alert('Failed to clear cart. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Calculate totals with better number handling
     const subtotal = Array.isArray(cartItems) ? cartItems.reduce((sum, item) => {
@@ -287,7 +333,17 @@ export default function Cart() {
                                 Continue Shopping
                             </button>
                         </Link>
-                        <h1 className="text-4xl font-bold font-mono text-amber-800">Shopping Cart</h1>
+                        <div className="flex justify-between items-center">
+                            <h1 className="text-4xl font-bold font-mono text-amber-800">Shopping Cart</h1>
+                            {cartItems.length > 0 && (
+                                <button 
+                                    onClick={handleClearCart}
+                                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 cursor-pointer transition-colors"
+                                >
+                                    Clear Cart
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
