@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar"
 import { Eye, EyeOff } from "lucide-react"
-import { Link, useParams, useNavigate } from "react-router"
+import { Link, useNavigate, useSearchParams } from "react-router"
 import { useState } from "react"
 import { resetPassword } from "../api/client.js"; 
 
@@ -11,11 +11,18 @@ export default function ConfirmPassword() {
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
     
-    const { token } = useParams(); 
+    // Fixed: Uncommented the token extraction
+    const [searchParams] = useSearchParams(); 
+    const token = searchParams.get('token'); 
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!token) {
+            setError("Invalid or missing reset token");
+            return;
+        }
         
         if (!password) {
             setError("Please enter a password");
@@ -32,6 +39,7 @@ export default function ConfirmPassword() {
         setMessage("");
 
         try {
+            // Fixed: Now passing both token and password
             const response = await resetPassword(token, password);
             
             if (response.status === 200) {
@@ -41,8 +49,13 @@ export default function ConfirmPassword() {
                 }, 2000);
             }
         } catch (error) {
+            console.error("Reset password error:", error);
             if (error.response?.data?.message) {
                 setError(error.response.data.message);
+            } else if (error.response?.status === 400) {
+                setError("Invalid or expired reset token. Please request a new password reset.");
+            } else if (error.response?.status === 404) {
+                setError("Reset password endpoint not found. Please contact support.");
             } else {
                 setError("Failed to reset password. Please try again.");
             }
@@ -50,6 +63,30 @@ export default function ConfirmPassword() {
             setLoading(false);
         }
     };
+
+    // Added: Show error if no token is found in URL
+    if (!token) {
+        return (
+            <>
+                <Navbar />
+                <div className="bg-white min-h-screen flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+                        <div className="text-center mb-6">
+                            <h1 className="text-2xl font-medium text-amber-800 font-mono mb-3">Invalid Reset Link</h1>
+                        </div>
+                        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                            This password reset link is invalid or has expired. Please request a new password reset.
+                        </div>
+                        <div className="text-center">
+                            <Link to="/login" className="text-amber-600 hover:text-amber-700 text-sm">
+                                Back to Login
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
 
     return (
         <>

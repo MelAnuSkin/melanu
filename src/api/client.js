@@ -82,37 +82,117 @@ export const deleteProduct = async (productId, token) => {
     return response;
 };
 
-// ==================== CART API FUNCTIONS ====================
+// ==================== UPDATED CART API FUNCTIONS ====================
 
 // Get Cart Items
 export const getCartItems = async (token) => {
-    const response = await apiClient.get('/api/carts', {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-    return response;
+    try {
+        console.log('Getting cart items with token:', token ? 'Token exists' : 'No token');
+        const response = await apiClient.get('/api/carts', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Get cart items response:', response);
+        return response;
+    } catch (error) {
+        console.error('Error in getCartItems:', error.response?.data || error.message);
+        throw error;
+    }
 };
 
 // Add Item to Cart
 export const addToCart = async (productId, quantity = 1, token) => {
-    const response = await apiClient.post('/api/carts/add', {
-        productId,
-        quantity
-    }, {
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        }
-    });
-    return response;
+    try {
+        console.log('Adding to cart:', { productId, quantity });
+        const response = await apiClient.post('/api/carts/add', {
+            productId,
+            quantity
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        console.log('Add to cart response:', response);
+        return response;
+    } catch (error) {
+        console.error('Error in addToCart:', error.response?.data || error.message);
+        throw error;
+    }
 };
 
 // Update Cart Item Quantity
 export const updateCartItem = async (productId, quantity, token) => {
-    const response = await apiClient.put('/api/carts/update', {
-        productId,
-        quantity
+    try {
+        console.log('Updating cart item:', { productId, quantity });
+        const response = await apiClient.put('/api/carts/update', {
+            productId,
+            quantity
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        console.log('Update cart item response:', response);
+        return response;
+    } catch (error) {
+        console.error('Error in updateCartItem:', error.response?.data || error.message);
+        throw error;
+    }
+};
+
+// Remove Item from Cart - UPDATED WITH WORKING INTEGRATION
+export const removeFromCart = async (productId, token) => {
+    try {
+        console.log('🗑️ Removing item from cart:', productId);
+        
+        // Use consistent apiClient instead of raw axios
+        const response = await apiClient.delete('/api/carts/remove', {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            data: {
+                productId
+            }
+        });
+        
+        console.log('🗑️ Remove response:', response);
+        return response;
+    } catch (error) {
+        console.error('🗑️ Remove error:', error);
+        console.error('🗑️ Error response:', error.response?.data);
+        throw error;
+    }
+};
+
+// Clear Cart (remove all items)
+export const clearCart = async (token) => {
+    try {
+        const response = await apiClient.delete('/api/carts/clear', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        return response;
+    } catch (error) {
+        console.error('Error in clearCart:', error.response?.data || error.message);
+        throw error;
+    }
+};
+
+export const resetPassword = async (token, password) => {
+    const response = await apiClient.get(`/api/auth/reset-password?token=${token}&password=${encodeURIComponent(password)}`);
+    return response;
+};
+
+export const subscribeToNewsletter = async (email, token) => {
+    const response = await apiClient.post('/api/newsletter/subscribe',{
+        email
     }, {
         headers: {
             'Content-Type': 'application/json',
@@ -122,23 +202,9 @@ export const updateCartItem = async (productId, quantity, token) => {
     return response;
 };
 
-// Remove Item from Cart
-export const removeFromCart = async (productId, token) => {
-    const response = await apiClient.delete('/api/carts/remove', {
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        data: {
-            productId
-        }
-    });
-    return response;
-};
-
-// Clear Cart (remove all items)
-export const clearCart = async (token) => {
-    const response = await apiClient.delete('/api/carts/clear', {
+// Search products by category
+export const searchProductsByCategory = async (category, token) => {
+    const response = await apiClient.get(`/api/products/search?category=${encodeURIComponent(category)}`, {
         headers: {
             'Authorization': `Bearer ${token}`
         }
@@ -146,9 +212,29 @@ export const clearCart = async (token) => {
     return response;
 };
 
-export const resetPassword = async (token, password) => {
-    const response = await apiClient.put(`/api/auth/reset-password/${token}`, {
-        password
+// Search products by name
+export const searchProductsByName = async (name, token) => {
+    const response = await apiClient.get(`/api/products/search?name=${encodeURIComponent(name)}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return response;
+};
+
+// Combined search function (can search by either name or category)
+export const searchProducts = async (searchParams, token) => {
+    let queryString = '';
+    if (searchParams.name) {
+        queryString = `name=${encodeURIComponent(searchParams.name)}`;
+    } else if (searchParams.category) {
+        queryString = `category=${encodeURIComponent(searchParams.category)}`;
+    }
+    
+    const response = await apiClient.get(`/api/products/search?${queryString}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
     });
     return response;
 };

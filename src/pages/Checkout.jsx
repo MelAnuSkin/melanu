@@ -164,52 +164,7 @@ export default function Checkout() {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             {/* Form Section */}
                             <div className="lg:col-span-2 space-y-6">
-                                <div className="bg-white rounded-lg shadow-sm shadow-amber-600 p-6">
-                                    <div className="flex items-center mb-6">
-                                        <User className="w-5 h-5 text-amber-600 mr-2" />
-                                        <h2 className="text-xl font-semibold text-amber-800">Personal Information</h2>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-amber-600 mb-2">First Name</label>
-                                            <input
-                                                type="text"
-                                                name="firstName"
-                                                placeholder="Enter your first name"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent" />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-amber-600 mb-2">Last Name</label>
-                                            <input
-                                                type="text"
-                                                name="lastName"
-                                                placeholder="Enter your last name"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent" />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-amber-600 mb-2">Email Address</label>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                placeholder="youremail@example.com"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent" />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-amber-600 mb-2">Phone Number</label>
-                                            <input
-                                                type="tel"
-                                                name="phone"
-                                                placeholder="+233 XX XXX XXXX"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent" />
-                                        </div>
-                                    </div>
-                                </div>
+                                
 
                                 <div className="bg-white rounded-lg shadow-sm shadow-amber-600 p-6">
                                     <div className="flex items-center mb-6">
@@ -248,11 +203,11 @@ export default function Checkout() {
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-amber-600 mb-2">Postal Code (Optional)</label>
+                                            <label className="block text-sm font-medium text-amber-600 mb-2">Phone Number</label>
                                             <input
-                                                type="text"
-                                                name="postalcode"
-                                                placeholder="Enter postal code"
+                                                type="tel"
+                                                name="phone"
+                                                placeholder="+233 XX XXX XXXX"
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent" />
                                         </div>
                                     </div>

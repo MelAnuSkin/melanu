@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import Navbar from "../components/Navbar";
-import UserNav from "../components/UserNav"; // Add this import
+import UserNav from "../components/UserNav";
 import { ArrowLeft, Minus, Plus, Trash, Truck } from "lucide-react";
 import Footer from "../components/Footer";
 import { Link } from "react-router";
-import { getCartItems, updateCartItem, removeFromCart, addToCart } from '../api/client.js';
+import { getCartItems, updateCartItem, removeFromCart } from '../api/client.js';
 
 export default function Cart() {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [updating, setUpdating] = useState({}); // Track which items are being updated
+    const [removing, setRemoving] = useState({}); // Track which items are being removed
 
     // Check authentication on component mount and listen for changes
     useEffect(() => {
@@ -23,7 +25,6 @@ export default function Cart() {
                 setIsAuthenticated(true);
             } else {
                 setIsAuthenticated(false);
-                // Redirect to login if not authenticated
                 alert('Please login to view your cart');
                 navigate('/login');
                 return;
@@ -32,10 +33,7 @@ export default function Cart() {
         
         checkAuth();
 
-        // Listen for storage changes (e.g., login/logout in another tab)
         window.addEventListener('storage', checkAuth);
-        
-        // Listen for custom auth events
         window.addEventListener('authChanged', checkAuth);
 
         return () => {
@@ -44,90 +42,69 @@ export default function Cart() {
         };
     }, [navigate]);
 
+    // Normalize cart data structure
+    const normalizeCartData = (data) => {
+        let cartData = data || [];
+        
+        // Handle different possible response structures
+        if (cartData.items) {
+            cartData = cartData.items;
+        } else if (cartData.cart && cartData.cart.items) {
+            cartData = cartData.cart.items;
+        }
+        
+        // Transform cart data to ensure consistent structure
+        return Array.isArray(cartData) ? cartData.map(item => ({
+            productId: item.productId || item._id || item.id,
+            _id: item._id || item.productId || item.id,
+            name: item.name || item.productName || item.product?.name || 'Unknown Product',
+            price: parseFloat(item.price || item.productPrice || item.product?.price || 0),
+            quantity: parseInt(item.quantity || 1),
+            image: item.image || item.imageUrl || item.product?.image || item.product?.imageUrl,
+            category: item.category || item.product?.category
+        })) : [];
+    };
+
     // Fetch cart items
-    useEffect(() => {
-        const fetchCartItems = async () => {
-            if (!isAuthenticated) return;
+    const fetchCartItems = async () => {
+        if (!isAuthenticated) return;
 
-            try {
-                const token = localStorage.getItem('token');
-                const response = await getCartItems(token);
-                
-                console.log('Cart API Response:', response.data); // Debug log
-                
-                // Handle different possible response structures
-                let cartData = response.data || [];
-                
-                // If the response has a nested structure, extract the items
-                if (cartData.items) {
-                    cartData = cartData.items;
-                } else if (cartData.cart && cartData.cart.items) {
-                    cartData = cartData.cart.items;
-                }
-                
-                // Transform cart data to ensure consistent structure
-                const transformedItems = Array.isArray(cartData) ? cartData.map(item => ({
-                    productId: item.productId || item._id || item.id,
-                    _id: item._id || item.productId || item.id,
-                    name: item.name || item.productName || item.product?.name || 'Unknown Product',
-                    price: item.price || item.productPrice || item.product?.price || 0,
-                    quantity: item.quantity || 1,
-                    image: item.image || item.imageUrl || item.product?.image || item.product?.imageUrl,
-                    category: item.category || item.product?.category
-                })) : [];
-                
-                console.log('Transformed cart items:', transformedItems); // Debug log
-                setCartItems(transformedItems);
-                setLoading(false);
-            } catch (error) {
-                console.error('Error fetching cart:', error);
-                if (error.response?.status === 401) {
-                    alert('Session expired. Please login again.');
-                    navigate('/login');
-                } else {
-                    console.error('Cart fetch error details:', error.response?.data);
-                    setCartItems([]);
-                }
-                setLoading(false);
+        try {
+            const token = localStorage.getItem('token');
+            console.log('Fetching cart items...');
+            
+            const response = await getCartItems(token);
+            console.log('Cart API Response:', response);
+            
+            const transformedItems = normalizeCartData(response.data);
+            console.log('Transformed cart items:', transformedItems);
+            
+            setCartItems(transformedItems);
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching cart:', error);
+            
+            if (error.response?.status === 401) {
+                alert('Session expired. Please login again.');
+                localStorage.removeItem('token');
+                localStorage.removeItem('isAuthenticated');
+                navigate('/login');
+            } else {
+                console.error('Cart fetch error details:', error.response?.data || error.message);
+                setCartItems([]);
             }
-        };
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchCartItems();
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated]);
 
     // Listen for cart updates from other components
     useEffect(() => {
         const handleCartUpdate = () => {
             if (isAuthenticated) {
-                // Refetch cart items when cart is updated
-                const fetchCartItems = async () => {
-                    try {
-                        const token = localStorage.getItem('token');
-                        const response = await getCartItems(token);
-                        
-                        let cartData = response.data || [];
-                        if (cartData.items) {
-                            cartData = cartData.items;
-                        } else if (cartData.cart && cartData.cart.items) {
-                            cartData = cartData.cart.items;
-                        }
-                        
-                        const transformedItems = Array.isArray(cartData) ? cartData.map(item => ({
-                            productId: item.productId || item._id || item.id,
-                            _id: item._id || item.productId || item.id,
-                            name: item.name || item.productName || item.product?.name || 'Unknown Product',
-                            price: item.price || item.productPrice || item.product?.price || 0,
-                            quantity: item.quantity || 1,
-                            image: item.image || item.imageUrl || item.product?.image || item.product?.imageUrl,
-                            category: item.category || item.product?.category
-                        })) : [];
-                        
-                        setCartItems(transformedItems);
-                    } catch (error) {
-                        console.error('Error refreshing cart:', error);
-                    }
-                };
-                
                 fetchCartItems();
             }
         };
@@ -139,168 +116,152 @@ export default function Cart() {
         };
     }, [isAuthenticated]);
 
-    // Update quantity
+    // Update quantity with improved error handling for axios responses
     const handleUpdateQuantity = async (productId, newQuantity) => {
-        if (newQuantity < 1) return;
+    if (newQuantity < 1) return;
+    if (updating[productId]) return;
 
-        // Optimistically update the UI first
-        const originalItems = [...cartItems];
-        setCartItems(prev => prev.map(item => 
-            (item.productId === productId || item._id === productId)
-                ? { ...item, quantity: newQuantity }
-                : item
-        ));
+    const itemKey = productId;
+    setUpdating(prev => ({ ...prev, [itemKey]: true }));
 
-        try {
-            const token = localStorage.getItem('token');
-            console.log('Updating cart item:', { productId, newQuantity }); // Debug log
-            
-            await updateCartItem(productId, newQuantity, token);
-            console.log('Update successful'); // Debug log
-            
-            // Force refresh cart from API to ensure consistency
-            const response = await getCartItems(token);
-            let cartData = response.data || [];
-            
-            if (cartData.items) {
-                cartData = cartData.items;
-            } else if (cartData.cart && cartData.cart.items) {
-                cartData = cartData.cart.items;
-            }
-            
-            const transformedItems = Array.isArray(cartData) ? cartData.map(item => ({
-                productId: item.productId || item._id || item.id,
-                _id: item._id || item.productId || item.id,
-                name: item.name || item.productName || item.product?.name || 'Unknown Product',
-                price: item.price || item.productPrice || item.product?.price || 0,
-                quantity: item.quantity || 1,
-                image: item.image || item.imageUrl || item.product?.image || item.product?.imageUrl,
-                category: item.category || item.product?.category
-            })) : [];
-            
-            setCartItems(transformedItems);
+    // Store original state for rollback
+    const originalItems = [...cartItems];
+    
+    // Optimistically update the UI
+    setCartItems(prev => prev.map(item => 
+        (item.productId === productId || item._id === productId)
+            ? { ...item, quantity: newQuantity }
+            : item
+    ));
+
+    try {
+        const token = localStorage.getItem('token');
+        console.log('Updating cart item quantity:', { productId, newQuantity });
+        
+        const response = await updateCartItem(productId, newQuantity, token);
+        console.log('Update quantity response:', response);
+        
+        if (response.status === 200 || response.status === 201 || response.status === 204) {
+            // Successfully updated - no need to refetch immediately
             window.dispatchEvent(new CustomEvent('cartUpdated'));
-            
-        } catch (error) {
-            console.error('Error updating quantity:', error);
-            console.error('Error details:', error.response?.data);
-            
-            // Revert optimistic update on failure
-            setCartItems(originalItems);
-            alert(`Failed to update quantity: ${error.response?.data?.message || error.message}`);
+            console.log('Quantity update successful');
+        } else {
+            throw new Error(`Unexpected response status: ${response.status}`);
         }
-    };
-
-    // Force refresh cart from API
-    const forceRefreshCart = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            console.log('Force refreshing cart...'); // Debug log
+        
+    } catch (error) {
+        console.error('Error updating quantity:', error);
+        
+        // Revert optimistic update on failure
+        setCartItems(originalItems);
+        
+        let errorMessage = 'Failed to update quantity';
+        
+        if (error.response) {
+            const status = error.response.status;
+            const data = error.response.data;
             
-            const response = await getCartItems(token);
-            console.log('Raw cart API response:', response); // Debug log
-            console.log('Cart data received:', response.data); // Debug log
-            
-            let cartData = response.data || [];
-            
-            // Handle different possible response structures
-            if (cartData.items) {
-                console.log('Using cartData.items:', cartData.items);
-                cartData = cartData.items;
-            } else if (cartData.cart && cartData.cart.items) {
-                console.log('Using cartData.cart.items:', cartData.cart.items);
-                cartData = cartData.cart.items;
-            } else {
-                console.log('Using cartData directly:', cartData);
+            if (status === 404) {
+                // This might be because the productId doesn't match what the server expects
+                errorMessage = 'Product not found in cart. This might be an ID mismatch issue.';
+                console.error('404 Error - Check if productId matches server expectations:', {
+                    sentProductId: productId,
+                    availableItems: cartItems.map(item => ({
+                        productId: item.productId,
+                        _id: item._id
+                    }))
+                });
+            } else if (status === 401) {
+                errorMessage = 'Please login again';
+                setTimeout(() => {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('isAuthenticated');
+                    navigate('/login');
+                }, 1000);
+            } else if (data?.message) {
+                errorMessage += `: ${data.message}`;
             }
+        }
+        
+        alert(errorMessage);
+    } finally {
+        setUpdating(prev => ({ ...prev, [itemKey]: false }));
+    }
+};
+ const handleRemoveItem = async (productId) => {
+    if (!window.confirm('Remove this item from cart?')) return;
+    if (removing[productId]) return;
+
+    const itemKey = productId;
+    setRemoving(prev => ({ ...prev, [itemKey]: true }));
+
+    try {
+        const token = localStorage.getItem('token');
+        console.log('🔍 Removing item from cart:', productId);
+        
+        const response = await removeFromCart(productId, token);
+        console.log('🔍 Remove item response:', response);
+        
+        if (response.status === 200 || response.status === 201 || response.status === 204) {
+            // Remove from local state immediately
+            setCartItems(prev => prev.filter(item => 
+                item.productId !== productId && item._id !== productId
+            ));
             
-            const transformedItems = Array.isArray(cartData) ? cartData.map(item => ({
-                productId: item.productId || item._id || item.id,
-                _id: item._id || item.productId || item.id,
-                name: item.name || item.productName || item.product?.name || 'Unknown Product',
-                price: item.price || item.productPrice || item.product?.price || 0,
-                quantity: item.quantity || 1,
-                image: item.image || item.imageUrl || item.product?.image || item.product?.imageUrl,
-                category: item.category || item.product?.category
-            })) : [];
-            
-            console.log('Final transformed items:', transformedItems); // Debug log
-            setCartItems(transformedItems);
+            // Dispatch event for other components
             window.dispatchEvent(new CustomEvent('cartUpdated'));
+            console.log('🔍 Item removal successful');
             
-            return transformedItems;
-        } catch (error) {
-            console.error('Error force refreshing cart:', error);
-            return [];
+        } else {
+            throw new Error(`Unexpected response status: ${response.status}`);
         }
-    };
-
-    // Remove item from cart
-    const handleRemoveItem = async (productId) => {
-        if (!window.confirm('Remove this item from cart?')) return;
-
-        try {
-            const token = localStorage.getItem('token');
-            console.log('Removing item from cart:', productId); // Debug log
+        
+    } catch (error) {
+        console.error('🔍 Error removing item:', error);
+        
+        let errorMessage = 'Failed to remove item';
+        
+        if (error.response) {
+            const status = error.response.status;
+            const data = error.response.data;
             
-            const response = await removeFromCart(productId, token);
-            console.log('Remove response status:', response.status); // Debug log
-            console.log('Remove response data:', response.data); // Debug log
-            
-            if (response.status === 200) {
-                console.log('Remove successful, refreshing cart...'); // Debug log
-                
-                // Wait a moment for backend to process
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Force refresh multiple times if needed
-                let attempts = 0;
-                const maxAttempts = 3;
-                
-                while (attempts < maxAttempts) {
-                    console.log(`Refresh attempt ${attempts + 1}/${maxAttempts}`);
-                    const refreshedItems = await forceRefreshCart();
-                    
-                    // Check if the item was actually removed
-                    const itemStillExists = refreshedItems.some(item => 
-                        item.productId === productId || item._id === productId
-                    );
-                    
-                    if (!itemStillExists) {
-                        console.log('Item successfully removed from cart');
-                        break;
-                    } else {
-                        console.log('Item still in cart, trying again...');
-                        attempts++;
-                        if (attempts < maxAttempts) {
-                            await new Promise(resolve => setTimeout(resolve, 1000));
-                        }
-                    }
-                }
-                
-                if (attempts >= maxAttempts) {
-                    console.error('Failed to remove item after multiple attempts');
-                    // Manually filter out the item as a last resort
-                    setCartItems(prev => prev.filter(item => 
-                        item.productId !== productId && item._id !== productId
-                    ));
-                }
+            if (status === 404) {
+                errorMessage = 'Item not found in cart. This might be an ID mismatch issue.';
+                console.error('404 Error - Check if productId matches server expectations:', {
+                    sentProductId: productId,
+                    availableItems: cartItems.map(item => ({
+                        productId: item.productId,
+                        _id: item._id
+                    }))
+                });
+            } else if (status === 401) {
+                errorMessage = 'Please login again';
+                setTimeout(() => {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('isAuthenticated');
+                    navigate('/login');
+                }, 1000);
+            } else if (data?.message) {
+                errorMessage += `: ${data.message}`;
             }
-            
-        } catch (error) {
-            console.error('Error removing item:', error);
-            console.error('Error details:', error.response?.data);
-            alert(`Failed to remove item: ${error.response?.data?.message || error.message}`);
         }
-    };
+        
+        alert(errorMessage);
+    } finally {
+        setRemoving(prev => ({ ...prev, [itemKey]: false }));
+    }
+};
 
-    // Calculate totals - ensure cartItems is always an array
-    const subtotal = Array.isArray(cartItems) ? cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0;
+    // Calculate totals with better number handling
+    const subtotal = Array.isArray(cartItems) ? cartItems.reduce((sum, item) => {
+        const price = parseFloat(item.price) || 0;
+        const quantity = parseInt(item.quantity) || 0;
+        return sum + (price * quantity);
+    }, 0) : 0;
 
     if (loading) {
         return (
             <>
-                {/* Conditional navigation for loading state */}
                 {isAuthenticated ? <UserNav /> : <Navbar />}
                 <div className="min-h-screen bg-white flex items-center justify-center">
                     <div className="text-center">
@@ -315,7 +276,6 @@ export default function Cart() {
 
     return (
         <>
-            {/* Conditional navigation - this is the key change */}
             {isAuthenticated ? <UserNav /> : <Navbar />}
 
             <div className="min-h-screen bg-white">
@@ -350,58 +310,79 @@ export default function Cart() {
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             <div className="lg:col-span-2 space-y-4">
-                                {cartItems.map((item) => (
-                                    <div key={item.productId || item._id} className="bg-white rounded-lg p-7 shadow-sm border border-amber-500">
-                                        <div className="flex items-center space-x-4">
-                                            <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
-                                                <img
-                                                    src={item.image || item.imageUrl || 'https://via.placeholder.com/96x96?text=Product'}
-                                                    alt={item.name}
-                                                    className="w-full h-full object-cover"
-                                                    onError={(e) => {
-                                                        e.target.src = 'https://via.placeholder.com/96x96?text=Product';
-                                                    }}
-                                                />
-                                            </div>
-
-                                            <div className="flex-1">
-                                                <h3 className="font-medium text-amber-800 mb-2">{item.name}</h3>
-                                                <div className="flex items-center space-x-2">
-                                                    <span className="text-amber-700 font-bold text-lg">GH₵{item.price}</span>
+                                {cartItems.map((item) => {
+                                    const itemId = item.productId || item._id;
+                                    const isUpdating = updating[itemId];
+                                    const isRemoving = removing[itemId];
+                                    
+                                    return (
+                                        <div key={itemId} className={`bg-white rounded-lg p-7 shadow-sm border border-amber-500 transition-opacity ${(isUpdating || isRemoving) ? 'opacity-50' : ''}`}>
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
+                                                    <img
+                                                        src={item.image || 'https://via.placeholder.com/96x96?text=Product'}
+                                                        alt={item.name}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.target.src = 'https://via.placeholder.com/96x96?text=Product';
+                                                        }}
+                                                    />
                                                 </div>
-                                            </div>
 
-                                            <div className="flex items-center space-x-3">
-                                                <button 
-                                                    onClick={() => handleUpdateQuantity(item.productId || item._id, item.quantity - 1)}
-                                                    className="w-8 h-8 rounded-full cursor-pointer border border-amber-600 flex items-center justify-center hover:bg-amber-500"
-                                                >
-                                                    <Minus className="w-4 h-4" />
-                                                </button>
-                                                <span className="w-8 text-center font-medium">{item.quantity}</span>
-                                                <button 
-                                                    onClick={() => handleUpdateQuantity(item.productId || item._id, item.quantity + 1)}
-                                                    className="w-8 h-8 rounded-full cursor-pointer border border-amber-600 flex items-center justify-center hover:bg-amber-500"
-                                                >
-                                                    <Plus className="w-4 h-4" />
-                                                </button>
-                                            </div>
-
-                                            <div className="text-right">
-                                                <div className="font-bold text-lg text-amber-700">
-                                                    GH₵{(item.price * item.quantity).toFixed(2)}
+                                                <div className="flex-1">
+                                                    <h3 className="font-medium text-amber-800 mb-2">{item.name}</h3>
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className="text-amber-700 font-bold text-lg">GH₵{item.price.toFixed(2)}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
 
-                                            <button 
-                                                onClick={() => handleRemoveItem(item.productId || item._id)}
-                                                className="text-amber-600 hover:text-amber-800 hover:bg-[#EADAC8] hover:rounded-lg hover:py-2 px-3 cursor-pointer p-1"
-                                            >
-                                                <Trash className="w-5 h-5" />
-                                            </button>
+                                                <div className="flex items-center space-x-3">
+                                                    <button 
+                                                        onClick={() => handleUpdateQuantity(itemId, item.quantity - 1)}
+                                                        disabled={isUpdating || isRemoving || item.quantity <= 1}
+                                                        className="w-8 h-8 rounded-full cursor-pointer border border-amber-600 flex items-center justify-center hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                    >
+                                                        {isUpdating ? (
+                                                            <div className="animate-spin rounded-full h-4 w-4 border border-amber-600 border-t-transparent"></div>
+                                                        ) : (
+                                                            <Minus className="w-4 h-4" />
+                                                        )}
+                                                    </button>
+                                                    <span className="w-8 text-center font-medium">{item.quantity}</span>
+                                                    <button 
+                                                        onClick={() => handleUpdateQuantity(itemId, item.quantity + 1)}
+                                                        disabled={isUpdating || isRemoving}
+                                                        className="w-8 h-8 rounded-full cursor-pointer border border-amber-600 flex items-center justify-center hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                    >
+                                                        {isUpdating ? (
+                                                            <div className="animate-spin rounded-full h-4 w-4 border border-amber-600 border-t-transparent"></div>
+                                                        ) : (
+                                                            <Plus className="w-4 h-4" />
+                                                        )}
+                                                    </button>
+                                                </div>
+
+                                                <div className="text-right">
+                                                    <div className="font-bold text-lg text-amber-700">
+                                                        GH₵{(item.price * item.quantity).toFixed(2)}
+                                                    </div>
+                                                </div>
+
+                                                <button 
+                                                    onClick={() => handleRemoveItem(itemId)}
+                                                    disabled={isUpdating || isRemoving}
+                                                    className="text-amber-600 hover:text-amber-800 hover:bg-[#EADAC8] hover:rounded-lg hover:py-2 px-3 cursor-pointer p-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                >
+                                                    {isRemoving ? (
+                                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-amber-600 border-t-transparent"></div>
+                                                    ) : (
+                                                        <Trash className="w-5 h-5" />
+                                                    )}
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             <div className="lg:col-span-1">
@@ -431,7 +412,10 @@ export default function Cart() {
                                     </div>
 
                                     <Link to="/checkout">
-                                        <button className="w-full bg-amber-600 text-white cursor-pointer py-3 rounded-lg font-medium hover:bg-amber-800 transition-colors">
+                                        <button 
+                                            disabled={cartItems.length === 0}
+                                            className="w-full bg-amber-600 text-white cursor-pointer py-3 rounded-lg font-medium hover:bg-amber-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
                                             Proceed to Checkout
                                         </button>
                                     </Link>

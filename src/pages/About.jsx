@@ -5,9 +5,18 @@ import about from "../assets/images/about.jpg";
 import { MicVocal } from "lucide-react";
 import anita from "../assets/images/anita.jpg";
 import Footer from "../components/Footer";
+import { subscribeToNewsletter } from "../api/client.js"; 
+import { Link } from 'react-router';
 
 export default function About() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    
+    // Newsletter form states
+    const [email, setEmail] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
+
     useEffect(() => {
         const checkAuth = () => {
             const token = localStorage.getItem('token');
@@ -30,6 +39,59 @@ export default function About() {
         };
     }, []);
 
+    // Newsletter subscription handler
+    const handleNewsletterSubmit = async (e) => {
+        e.preventDefault();
+        
+        // Clear previous messages
+        setError("");
+        setMessage("");
+
+        // Check if user is authenticated
+        if (!isAuthenticated) {
+            setError("Please log in to subscribe to our newsletter");
+            return;
+        }
+
+        // Validate email
+        if (!email) {
+            setError("Please enter your email address");
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setError("Please enter a valid email address");
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await subscribeToNewsletter(email, token);
+            
+            if (response.status === 200 || response.status === 201) {
+                setMessage("Successfully subscribed to our newsletter! Check your email for confirmation.");
+                setEmail(""); // Clear the email input
+            }
+        } catch (error) {
+            if (error.response?.status === 401) {
+                setError("Please log in again to subscribe to our newsletter");
+                // Optionally clear authentication
+                localStorage.removeItem('token');
+                localStorage.removeItem('isAuthenticated');
+                setIsAuthenticated(false);
+            } else if (error.response?.data?.message) {
+                setError(error.response.data.message);
+            } else {
+                setError("Failed to subscribe. Please try again later.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <>
             {isAuthenticated ? <UserNav /> : <Navbar />}
@@ -44,7 +106,11 @@ export default function About() {
                             <p className="text-lg text-amber-800 mb-8 leading-relaxed font-semibold">MelAnu was born from a deep appreciation for African skincare
                                 <br />traditions and a vision to share these treasures with the world<br />while empowering the communities that make it all possible</p>
 
-                            <button className="bg-amber-600 hover:bg-amber-800 text-white font-medium px-7 py-2 rounded-lg transition-all duration-300 transform hover:shadow-lg cursor-pointer">Join Our Mission</button>
+
+                            <Link to="/contact">
+                            <button className="bg-amber-600 hover:bg-amber-800 text-white font-medium px-7 py-2 rounded-lg transition-all duration-300 transform hover:shadow-lg cursor-pointer">
+                                Join Our Mission
+                            </button></Link>
                         </div>
 
                         <div className="flex-1 max-w-2xl">
@@ -108,7 +174,7 @@ export default function About() {
                         <div className="bg-white rounded-xl p-7 shadow-lg hover:shadow-xl transition-shadow text-center group">
                             <div className="w-16 h-16 mx-auto bg-white rounded-full flex items-center justify-center">
                                 <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 003.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                                 </svg>
                             </div>
                             <h3 className="text-xl font-semibold text-amber-900 mb-2">Excellence</h3>
@@ -161,19 +227,50 @@ export default function About() {
                             Be the first to discover new products, wellness tips, and stories from our
                             SheaStrong community. Plus, get 15% off your first order!
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto mb-4">
+
+                        {/* Success Message */}
+                        {message && (
+                            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded max-w-md mx-auto">
+                                {message}
+                            </div>
+                        )}
+
+                        {/* Error Message */}
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded max-w-md mx-auto">
+                                {error}
+                            </div>
+                        )}
+
+                        {/* Newsletter Form */}
+                        <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto mb-4">
                             <input
                                 type="email"
                                 placeholder="Enter your email address"
-                                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" 
+                            />
 
-                            <button className="px-8 py-2 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-900 cursor-pointer transition-colors">
-                                Join Now
+                            <button 
+                                type="submit"
+                                disabled={loading}
+                                className="px-8 py-2 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-900 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? "Joining..." : "Join Now"}
                             </button>
-                        </div>
+                        </form>
+
                         <p className="text-amber-500 text-sm">
                             We respect your privacy. Unsubscribe at any time.
                         </p>
+
+                        {/* Login prompt for non-authenticated users */}
+                        {!isAuthenticated && (
+                            <p className="text-amber-600 text-sm mt-2">
+                                <span className="font-medium">Note:</span> Please log in to subscribe to our newsletter
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
