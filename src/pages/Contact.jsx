@@ -3,9 +3,21 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useState, useEffect } from "react"; 
 import UserNav from "../components/UserNav";
+import { sendContactMessage } from "../api/client.js";
 
 export default function Contact() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [formData, setFormData] = useState({
+        fullName: '',
+        email: '',
+        inquiryType: '',
+        subject: '',
+        message: ''
+    });
+    const [isLoading, setIsLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+
     useEffect(() => {
         const checkAuth = () => {
             const token = localStorage.getItem('token');
@@ -30,6 +42,64 @@ export default function Contact() {
         };
     }, []);
 
+    // Handle form input changes
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+        // Clear messages when user starts typing
+        if (successMessage) setSuccessMessage('');
+        if (errorMessage) setErrorMessage('');
+    };
+
+    // Handle form submission
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        // Basic validation
+        if (!formData.fullName || !formData.email || !formData.inquiryType || !formData.subject || !formData.message) {
+            setErrorMessage('Please fill in all required fields.');
+            return;
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            setErrorMessage('Please enter a valid email address.');
+            return;
+        }
+
+        setIsLoading(true);
+        setErrorMessage('');
+        setSuccessMessage('');
+
+        try {
+            const response = await sendContactMessage(formData);
+            
+            if (response.status === 200 || response.status === 201) {
+                setSuccessMessage('Thank you for your message! We\'ll get back to you soon.');
+                // Reset form
+                setFormData({
+                    fullName: '',
+                    email: '',
+                    inquiryType: '',
+                    subject: '',
+                    message: ''
+                });
+            }
+        } catch (error) {
+            console.error('Error sending contact message:', error);
+            setErrorMessage(
+                error.response?.data?.message || 
+                'Failed to send your message. Please try again later.'
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <>
             {isAuthenticated ? <UserNav /> : <Navbar />}
@@ -48,15 +118,34 @@ export default function Contact() {
                             <div className="bg-white rounded-lg shadow-sm border border-amber-200 p-8">
                                 <h2 className="text-xl font-bold text-amber-800 mb-6">Send us a Message</h2>
 
-                                <div className="space-y-6">
+                                {/* Success Message */}
+                                {successMessage && (
+                                    <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                        <p className="text-green-700 text-sm">{successMessage}</p>
+                                    </div>
+                                )}
+
+                                {/* Error Message */}
+                                {errorMessage && (
+                                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                        <p className="text-red-700 text-sm">{errorMessage}</p>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleSubmit} className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium text-amber-700 mb-2">Full Name <span className="text-amber-700">*</span>
                                             </label>
                                             <input
                                                 type="text"
+                                                name="fullName"
+                                                value={formData.fullName}
+                                                onChange={handleInputChange}
                                                 placeholder="Your full name"
-                                                className="w-full px-4 py-2 border border-amber-500 rounded-lg focus:ring-2 focus:outline-none focus:ring-amber-500 focus:border-amber-500 transition-colors" />
+                                                className="w-full px-4 py-2 border border-amber-500 rounded-lg focus:ring-2 focus:outline-none focus:ring-amber-500 focus:border-amber-500 transition-colors"
+                                                disabled={isLoading}
+                                            />
                                         </div>
 
                                         <div>
@@ -64,8 +153,13 @@ export default function Contact() {
                                             </label>
                                             <input
                                                 type="email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleInputChange}
                                                 placeholder="youremail@example.com"
-                                                className="w-full px-4 py-2 border border-amber-500 rounded-lg focus:ring-2 focus:outline-none focus:ring-amber-500 focus:border-amber-500 transition-colors" />
+                                                className="w-full px-4 py-2 border border-amber-500 rounded-lg focus:ring-2 focus:outline-none focus:ring-amber-500 focus:border-amber-500 transition-colors"
+                                                disabled={isLoading}
+                                            />
                                         </div>
                                     </div>
 
@@ -74,12 +168,18 @@ export default function Contact() {
                                         </label>
 
                                         <div className="relative">
-                                            <select className="w-full px-4 py-2 border border-amber-500 rounded-lg focus:ring-2 focus:outline-none focus:ring-amber-500 focus:border-amber-500 transition-colors cursor-pointer">
-                                                <option>Select inquiry type</option>
-                                                <option>General inquiry</option>
-                                                <option>Order support</option>
-                                                <option>SheaStrong Partnership</option>
-                                                <option>Customer Support</option>
+                                            <select 
+                                                name="inquiryType"
+                                                value={formData.inquiryType}
+                                                onChange={handleInputChange}
+                                                className="w-full px-4 py-2 border border-amber-500 rounded-lg focus:ring-2 focus:outline-none focus:ring-amber-500 focus:border-amber-500 transition-colors cursor-pointer"
+                                                disabled={isLoading}
+                                            >
+                                                <option value="">Select inquiry type</option>
+                                                <option value="General">General inquiry</option>
+                                                <option value="Order Support">Order support</option>
+                                                <option value="SheaStrong Partnership">SheaStrong Partnership</option>
+                                                <option value="Customer Support">Customer Support</option>
                                             </select>
                                         </div>
                                     </div>
@@ -89,8 +189,13 @@ export default function Contact() {
                                         </label>
                                         <input
                                             type="text"
+                                            name="subject"
+                                            value={formData.subject}
+                                            onChange={handleInputChange}
                                             placeholder="Brief subject of your message"
-                                            className="w-full px-4 py-2 border border-amber-500 rounded-lg focus:ring-2 focus:outline-none focus:ring-amber-500 focus:border-amber-500 transition-colors" />
+                                            className="w-full px-4 py-2 border border-amber-500 rounded-lg focus:ring-2 focus:outline-none focus:ring-amber-500 focus:border-amber-500 transition-colors"
+                                            disabled={isLoading}
+                                        />
                                     </div>
 
                                     <div>
@@ -98,15 +203,27 @@ export default function Contact() {
                                         </label>
                                         <textarea
                                             rows={6}
+                                            name="message"
+                                            value={formData.message}
+                                            onChange={handleInputChange}
                                             placeholder="Tell us more about how we can help you"
-                                            className="w-full px-4 py-2 border border-amber-500 rounded-lg focus:ring-2 focus:outline-none focus:ring-amber-500 focus:border-amber-500 transition-colors" />
+                                            className="w-full px-4 py-2 border border-amber-500 rounded-lg focus:ring-2 focus:outline-none focus:ring-amber-500 focus:border-amber-500 transition-colors"
+                                            disabled={isLoading}
+                                        />
                                     </div>
 
                                     <button
-                                        type="button"
-                                        className="bg-amber-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-amber-700 transition-colors focus:ring-2 focus:ring-amber-500 outline-none focus:ring-offset-2 cursor-pointer">Send Message
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className={`px-8 py-3 rounded-lg font-medium transition-colors focus:ring-2 focus:ring-amber-500 outline-none focus:ring-offset-2 cursor-pointer ${
+                                            isLoading 
+                                                ? 'bg-amber-400 text-white cursor-not-allowed' 
+                                                : 'bg-amber-600 text-white hover:bg-amber-700'
+                                        }`}
+                                    >
+                                        {isLoading ? 'Sending...' : 'Send Message'}
                                     </button>
-                                </div>
+                                </form>
                             </div>
                         </div>
 

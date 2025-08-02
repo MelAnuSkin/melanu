@@ -13,7 +13,7 @@ export default function Cart() {
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [updating, setUpdating] = useState({}); 
-    const [removing, setRemoving] = useState({}); 
+    const [removing, setRemoving] = useState({});
 
     
     useEffect(() => {
@@ -54,15 +54,28 @@ export default function Cart() {
         }
         
         // Transform cart data to ensure consistent structure
-        return Array.isArray(cartData) ? cartData.map(item => ({
-            productId: item.productId || item._id || item.id,
-            _id: item._id || item.productId || item.id,
-            name: item.name || item.productName || item.product?.name || 'Unknown Product',
-            price: parseFloat(item.price || item.productPrice || item.product?.price || 0),
-            quantity: parseInt(item.quantity || 1),
-            image: item.image || item.imageUrl || item.product?.image || item.product?.imageUrl,
-            category: item.category || item.product?.category
-        })) : [];
+        return Array.isArray(cartData) ? cartData.map(item => {
+            // FIXED: Extract product ID from nested product object
+            const productId = item.product?._id || item.productId || item._id || item.id;
+            
+            console.log('=== ITEM PROCESSING DEBUG ===');
+            console.log('Processing cart item:', item);
+            console.log('Extracted productId:', productId);
+            console.log('Cart item _id:', item._id);
+            console.log('Product nested _id:', item.product?._id);
+            console.log('=== END ITEM PROCESSING ===');
+            
+            return {
+                productId: productId,  // Use the actual product ID
+                cartItemId: item._id,  // Keep cart item ID separate
+                _id: item._id,         // Keep for compatibility
+                name: item.name || item.productName || item.product?.name || 'Unknown Product',
+                price: parseFloat(item.price || item.productPrice || item.product?.price || 0),
+                quantity: parseInt(item.quantity || 1),
+                image: item.image || item.imageUrl || item.product?.image || item.product?.imageUrl,
+                category: item.category || item.product?.category
+            };
+        }) : [];
     };
 
     // Fetch cart items
@@ -74,15 +87,59 @@ export default function Cart() {
             console.log('Fetching cart items...');
             
             const response = await getCartItems(token);
-            console.log('Cart API Response:', response);
+            
+            // === EXTENSIVE DEBUG LOGGING ===
+            console.log('=== RAW CART RESPONSE DEBUG ===');
+            console.log('Full response object:', response);
+            console.log('Response status:', response.status);
+            console.log('Response data:', response.data);
+            console.log('Response data type:', typeof response.data);
+            console.log('Response data stringified:', JSON.stringify(response.data, null, 2));
+            
+            // Check if data is array or object
+            if (Array.isArray(response.data)) {
+                console.log('Data is an array with length:', response.data.length);
+                response.data.forEach((item, index) => {
+                    console.log(`Item ${index}:`, JSON.stringify(item, null, 2));
+                });
+            } else if (response.data && typeof response.data === 'object') {
+                console.log('Data is an object with keys:', Object.keys(response.data));
+                if (response.data.items) {
+                    console.log('Found items array:', JSON.stringify(response.data.items, null, 2));
+                }
+                if (response.data.cart) {
+                    console.log('Found cart object:', JSON.stringify(response.data.cart, null, 2));
+                }
+            }
+            console.log('=== END RAW CART DEBUG ===');
             
             const transformedItems = normalizeCartData(response.data);
+            
+            console.log('=== TRANSFORMATION DEBUG ===');
             console.log('Transformed cart items:', transformedItems);
+            console.log('Number of transformed items:', transformedItems.length);
+            transformedItems.forEach((item, index) => {
+                console.log(`Transformed item ${index}:`, {
+                    productId: item.productId,
+                    _id: item._id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    image: item.image,
+                    fullItem: item
+                });
+            });
+            console.log('=== END TRANSFORMATION DEBUG ===');
             
             setCartItems(transformedItems);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching cart:', error);
+            console.log('=== ERROR DEBUG ===');
+            console.log('Error response:', error.response);
+            console.log('Error data:', error.response?.data);
+            console.log('Error status:', error.response?.status);
+            console.log('=== END ERROR DEBUG ===');
             
             if (error.response?.status === 401) {
                 alert('Session expired. Please login again.');
@@ -101,7 +158,7 @@ export default function Cart() {
         fetchCartItems();
     }, [isAuthenticated]);
 
-    // Listen for cart updates from other components
+  
     useEffect(() => {
         const handleCartUpdate = () => {
             if (isAuthenticated) {
@@ -116,7 +173,7 @@ export default function Cart() {
         };
     }, [isAuthenticated]);
 
-    // Update quantity with improved error handling for axios responses
+    // Update quantity
     const handleUpdateQuantity = async (productId, newQuantity) => {
         if (newQuantity < 1) return;
         if (updating[productId]) return;
@@ -127,7 +184,7 @@ export default function Cart() {
         // Store original state for rollback
         const originalItems = [...cartItems];
         
-        // Optimistically update the UI
+        // update the UI
         setCartItems(prev => prev.map(item => 
             (item.productId === productId || item._id === productId)
                 ? { ...item, quantity: newQuantity }
@@ -136,13 +193,16 @@ export default function Cart() {
 
         try {
             const token = localStorage.getItem('token');
+            console.log('=== UPDATE QUANTITY DEBUG ===');
             console.log('Updating cart item quantity:', { productId, newQuantity });
+            console.log('ProductId type:', typeof productId);
+            console.log('ProductId length:', productId?.length);
+            console.log('=== END UPDATE DEBUG ===');
             
             const response = await updateCartItem(productId, newQuantity, token);
             console.log('Update quantity response:', response);
             
             if (response.status === 200 || response.status === 201 || response.status === 204) {
-             
                 window.dispatchEvent(new CustomEvent('cartUpdated'));
                 console.log('Quantity update successful');
             } else {
@@ -152,7 +212,7 @@ export default function Cart() {
         } catch (error) {
             console.error('Error updating quantity:', error);
             
-            // Revert optimistic update on failure
+           
             setCartItems(originalItems);
             
             let errorMessage = 'Failed to update quantity';
@@ -164,13 +224,14 @@ export default function Cart() {
                 if (status === 404) {
                     
                     errorMessage = 'Product not found in cart. This might be an ID mismatch issue.';
-                    console.error('404 Error - Check if productId matches server expectations:', {
-                        sentProductId: productId,
-                        availableItems: cartItems.map(item => ({
-                            productId: item.productId,
-                            _id: item._id
-                        }))
-                    });
+                    console.error('=== 404 ERROR ANALYSIS ===');
+                    console.error('Sent productId:', productId);
+                    console.error('Available items in state:', cartItems.map(item => ({
+                        productId: item.productId,
+                        _id: item._id,
+                        name: item.name
+                    })));
+                    console.error('=== END 404 ANALYSIS ===');
                 } else if (status === 401) {
                     errorMessage = 'Please login again';
                     setTimeout(() => {
@@ -189,7 +250,6 @@ export default function Cart() {
         }
     };
 
-    // Updated handleRemoveItem function to use removeFromCart instead of clearCart
     const handleRemoveItem = async (productId) => {
         if (!window.confirm('Remove this item from cart?')) return;
         if (removing[productId]) return;
@@ -207,9 +267,11 @@ export default function Cart() {
 
         try {
             const token = localStorage.getItem('token');
+            console.log('=== REMOVE ITEM DEBUG ===');
             console.log('Removing item from cart:', productId);
+            console.log('ProductId type:', typeof productId);
+            console.log('=== END REMOVE DEBUG ===');
             
-         
             const response = await removeFromCart(productId, token);
             console.log('Remove item response:', response);
             
@@ -244,13 +306,14 @@ export default function Cart() {
                 
                 if (status === 404) {
                     errorMessage = 'Item not found in cart. This might be an ID mismatch issue.';
-                    console.error('404 Error - Check if productId matches server expectations:', {
-                        sentProductId: productId,
-                        availableItems: cartItems.map(item => ({
-                            productId: item.productId,
-                            _id: item._id
-                        }))
-                    });
+                    console.error('=== REMOVE 404 ERROR ANALYSIS ===');
+                    console.error('Sent productId:', productId);
+                    console.error('Available items:', cartItems.map(item => ({
+                        productId: item.productId,
+                        _id: item._id,
+                        name: item.name
+                    })));
+                    console.error('=== END REMOVE 404 ANALYSIS ===');
                 } else if (status === 401) {
                     errorMessage = 'Please login again';
                     setTimeout(() => {
@@ -298,7 +361,26 @@ export default function Cart() {
         }
     };
 
-    // Calculate totals with better number handling
+    
+    const handleProceedToPayment = () => {
+        if (cartItems.length === 0) {
+            alert('Your cart is empty');
+            return;
+        }
+        
+        console.log('=== PROCEEDING TO PAYMENT DEBUG ===');
+        console.log('Cart items before checkout:', cartItems);
+        console.log('Cart items productIds:', cartItems.map(item => ({
+            name: item.name,
+            productId: item.productId,
+            _id: item._id
+        })));
+        console.log('=== END PAYMENT DEBUG ===');
+    
+        navigate('/checkout');
+    };
+
+    
     const subtotal = Array.isArray(cartItems) ? cartItems.reduce((sum, item) => {
         const price = parseFloat(item.price) || 0;
         const quantity = parseInt(item.quantity) || 0;
@@ -467,14 +549,13 @@ export default function Cart() {
                                         </div>
                                     </div>
 
-                                    <Link to="/checkout">
-                                        <button 
-                                            disabled={cartItems.length === 0}
-                                            className="w-full bg-amber-600 text-white cursor-pointer py-3 rounded-lg font-medium hover:bg-amber-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Proceed to Checkout
-                                        </button>
-                                    </Link>
+                                    <button 
+                                        onClick={handleProceedToPayment}
+                                        disabled={cartItems.length === 0}
+                                        className="w-full bg-amber-600 text-white cursor-pointer py-3 rounded-lg font-medium hover:bg-amber-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Proceed to Payment
+                                    </button>
 
                                     <div className="mt-4 text-center text-sm text-amber-500">
                                         <p>Secure checkout with 256-bit SSL encryption</p>

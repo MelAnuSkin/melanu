@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Zap } from "lucide-react";
 import { getAllProducts, addToCart } from '../api/client.js';
 
 export default function ProductGrid({ products, onCartUpdate }) {
@@ -75,6 +75,21 @@ export default function ProductGrid({ products, onCartUpdate }) {
         }
     };
 
+    // Buy now function - Simple redirect to checkout
+    const handleBuyNow = (product) => {
+        const token = localStorage.getItem('token');
+        const isAuthenticated = localStorage.getItem('isAuthenticated');
+
+        if (!token || !isAuthenticated) {
+            alert('Please login to make a purchase');
+            return;
+        }
+
+        // Simple redirect to checkout page
+        // You can customize this redirect based on your routing setup
+        window.location.href = '/checkout'; // or use navigate('/checkout') if using React Router
+    };
+
     // Use API products only
     const displayProducts = apiProducts;
 
@@ -136,15 +151,26 @@ export default function ProductGrid({ products, onCartUpdate }) {
                                     {product.name}
                                 </h3>
                                 
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between mb-3">
                                     <span className="text-lg font-semibold text-amber-900">
                                         GH₵{product.price}
                                     </span>
+                                </div>
+
+                                {/* Button Container */}
+                                <div className="flex flex-col gap-2">
+                                    <button 
+                                        onClick={() => handleBuyNow(product)}
+                                        className="bg-green-600 hover:bg-green-700 text-white cursor-pointer px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 font-medium"
+                                    >
+                                        <Zap size={16} />
+                                        Buy Now
+                                    </button>
                                     
                                     <button 
                                         onClick={() => handleAddToCart(product)}
                                         disabled={addingToCart === product.id}
-                                        className="bg-amber-600 hover:bg-amber-700 text-white cursor-pointer px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="bg-amber-600 hover:bg-amber-700 text-white cursor-pointer px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <ShoppingCart size={16} />
                                         {addingToCart === product.id ? 'Adding...' : 'Add to Cart'}

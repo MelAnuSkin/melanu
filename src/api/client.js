@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_BASE_URL
+    baseURL: import.meta.env.VITE_BASE_URL || 'https://skin-care-mel-api.onrender.com'
 });
 
 export const apiFetcher = async (url) => {
@@ -28,6 +28,23 @@ export const loginUser = async (email, password) => {
 export const getAllProducts = async () => {
     const response = await apiClient.get('/api/products');
     return response;
+};
+
+// Get Single Product function
+export const getProduct = async (productId, token) => {
+    try {
+        console.log('Getting product with ID:', productId);
+        const response = await apiClient.get(`/api/products/${productId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        console.log('Get product response:', response);
+        return response;
+    } catch (error) {
+        console.error('Error in getProduct:', error.response?.data || error.message);
+        throw error;
+    }
 };
 
 // Add Product function
@@ -82,8 +99,6 @@ export const deleteProduct = async (productId, token) => {
     return response;
 };
 
-
-
 // Get Cart Items
 export const getCartItems = async (token) => {
     try {
@@ -102,44 +117,87 @@ export const getCartItems = async (token) => {
     }
 };
 
-// Add Item to Cart
+// Add Item to Cart - UPDATED FOR NEW ENDPOINT FORMAT
 export const addToCart = async (productId, quantity = 1, token) => {
     try {
         console.log('Adding to cart:', { productId, quantity });
-        const response = await apiClient.post('/api/carts/add', {
-            productId,
-            quantity
+        console.log('Using token:', token ? 'Token exists' : 'No token');
+        console.log('Making request to:', `${apiClient.defaults.baseURL}/api/carts/add/${productId}`);
+        
+        const response = await apiClient.post(`/api/carts/add/${productId}`, {
+            quantity: parseInt(quantity) // Only quantity in body
         }, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             }
         });
+        
         console.log('Add to cart response:', response);
         return response;
     } catch (error) {
-        console.error('Error in addToCart:', error.response?.data || error.message);
+        console.error('Error in addToCart:', error);
+        console.error('Error response:', error.response?.data);
+        console.error('Error status:', error.response?.status);
+        console.error('Error config:', error.config);
         throw error;
     }
 };
 
-// Update Cart Item Quantity
+// Update Cart Item Quantity - ENHANCED DEBUGGING VERSION
 export const updateCartItem = async (productId, quantity, token) => {
     try {
-        console.log('Updating cart item:', { productId, quantity });
-        const response = await apiClient.put('/api/carts/update', {
-            productId,
-            quantity
-        }, {
+        console.log('=== UPDATE CART ITEM DEBUG ===');
+        console.log('1. Input parameters:', { productId, quantity, token: token ? 'EXISTS' : 'MISSING' });
+        console.log('2. ProductId type:', typeof productId);
+        console.log('3. ProductId length:', productId?.length);
+        console.log('4. Quantity type:', typeof quantity);
+        
+        const cleanProductId = productId.toString().trim();
+        const cleanQuantity = parseInt(quantity);
+        
+        console.log('5. Cleaned productId:', cleanProductId);
+        console.log('6. Cleaned quantity:', cleanQuantity);
+        
+        const fullUrl = `${apiClient.defaults.baseURL}/api/carts/update/${cleanProductId}`;
+        console.log('7. Full URL:', fullUrl);
+        
+        const requestData = {
+            quantity: cleanQuantity
+        };
+        
+        console.log('8. Request data:', requestData);
+        console.log('9. About to make request...');
+        
+        const response = await apiClient.put(`/api/carts/update/${cleanProductId}`, requestData, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             }
         });
-        console.log('Update cart item response:', response);
+        
+        console.log('10. SUCCESS - Update cart item response:', response);
         return response;
     } catch (error) {
-        console.error('Error in updateCartItem:', error.response?.data || error.message);
+        console.log('=== UPDATE CART ERROR DEBUG ===');
+        console.error('ERROR in updateCartItem:', error);
+        console.error('Error response data:', error.response?.data);
+        console.error('Error status:', error.response?.status);
+        console.error('Error config URL:', error.config?.url);
+        console.error('Error config method:', error.config?.method);
+        console.error('Error config data:', error.config?.data);
+        console.error('Full error config:', error.config);
+        
+        // Check if this is a 404 specifically about product not found
+        if (error.response?.status === 404 && error.response?.data?.message?.includes('Product not found')) {
+            console.log('=== 404 PRODUCT NOT FOUND ANALYSIS ===');
+            console.log('This could be due to:');
+            console.log('1. Product ID format mismatch');
+            console.log('2. Product not actually in cart');
+            console.log('3. User session/token mismatch');
+            console.log('4. Backend expecting different data format');
+        }
+        
         throw error;
     }
 };
@@ -175,6 +233,47 @@ export const clearCart = async (token) => {
         return response;
     } catch (error) {
         console.error('Error in clearCart:', error.response?.data || error.message);
+        throw error;
+    }
+};
+
+// PAYMENT FUNCTIONS
+
+// Create Order function - you'll need to implement this endpoint
+export const createOrder = async (orderData, userId, token) => {
+    try {
+        console.log('Creating order:', orderData);
+        const response = await apiClient.post(`/api/orders/${userId}`, orderData, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        console.log('Create order response:', response);
+        return response;
+    } catch (error) {
+        console.error('Error in createOrder:', error.response?.data || error.message);
+        throw error;
+    }
+};
+
+// Initiate Payment function
+export const initiatePayment = async (email, orderId, token) => {
+    try {
+        console.log('Initiating payment:', { email, orderId });
+        const response = await apiClient.post('/api/payments/initiate', {
+            email,
+            orderId
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        console.log('Initiate payment response:', response);
+        return response;
+    } catch (error) {
+        console.error('Error in initiatePayment:', error.response?.data || error.message);
         throw error;
     }
 };
@@ -239,4 +338,98 @@ export const searchProducts = async (searchParams, token) => {
     return response;
 };
 
-export const imageBaseURL = import.meta.env.VITE_IMAGE_BASE_URL;
+// Send Contact Message function
+export const sendContactMessage = async (contactData) => {
+    try {
+        console.log('Sending contact message:', contactData);
+        const response = await apiClient.post('/api/contact/send', contactData, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Contact message response:', response);
+        return response;
+    } catch (error) {
+        console.error('Error in sendContactMessage:', error.response?.data || error.message);
+        throw error;
+    }
+};
+
+export const getAllContactMessages = async (token) => {
+    try {
+        console.log('Getting all contact messages for admin');
+        const response = await apiClient.get('/api/contact/all', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Get all contact messages response:', response);
+        return response;
+    } catch (error) {
+        console.error('Error in getAllContactMessages:', error.response?.data || error.message);
+        throw error;
+    }
+};
+
+// Reply to Contact Message function
+export const replyToMessage = async (messageId, replyMessage, token) => {
+    try {
+        console.log('Replying to message:', { messageId, replyMessage });
+        console.log('Making request to:', `${apiClient.defaults.baseURL}/api/contact/reply/${messageId}`);
+        
+        const requestData = {
+            replyMessage: replyMessage.trim() // Changed from "replyMessasge" to "replyMessage"
+        };
+        
+        console.log('Request data:', requestData);
+        
+        const response = await apiClient.post(`/api/contact/reply/${messageId}`, requestData, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Reply message response:', response);
+        return response;
+    } catch (error) {
+        console.error('Error in replyToMessage:', error);
+        console.error('Error response:', error.response?.data);
+        console.error('Error status:', error.response?.status);
+        throw error;
+    }
+};
+
+export const getAllOrders = async (token) => {
+    try {
+        const response = await apiClient.get('/api/orders', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        return response;
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        throw error;
+    }
+};
+
+export const updateOrderStatus = async (orderId, status, token) => {
+    try {
+        const response = await apiClient.put(`/api/orders/${orderId}/status`, {
+            status
+        }, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        return response;
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        throw error;
+    }
+};
+
+export const imageBaseURL = import.meta.env.VITE_IMAGE_BASE_URL; 

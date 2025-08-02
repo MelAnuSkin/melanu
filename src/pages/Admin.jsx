@@ -1,11 +1,130 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Upload, X, LogOut } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, X, LogOut, Mail, Reply } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { addProduct, deleteProduct, getAllProducts, updateProduct } from '../api/client.js';
-import { apiClient } from '../api/client.js';
-import Footer from '../components/Footer';
+import { addProduct, deleteProduct, getAllProducts, updateProduct, getAllOrders, updateOrderStatus, replyToMessage } from '../api/client.js';
+import { apiClient, getAllContactMessages } from '../api/client.js';
+import Header from '../components/Header.jsx';
+import Navigation from '../components/Navigation.jsx';
 
-// Move ProductForm OUTSIDE of the Admin component to prevent re-creation on every render
+// Reply Modal Component
+const ReplyModal = ({ message, isOpen, onClose, onSend, isLoading }) => {
+  const [replyText, setReplyText] = useState('');
+  const [subject, setSubject] = useState(`Re: Your inquiry - ${message?.name || 'Customer Support'}`);
+
+  const handleSend = () => {
+    if (replyText.trim()) {
+      onSend({
+        to: message.email,
+        subject: subject,
+        message: replyText,
+        originalMessage: message
+      });
+      setReplyText('');
+      setSubject(`Re: Your inquiry - ${message?.name || 'Customer Support'}`);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        {/* Header - Fixed */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 sm:p-6 rounded-t-xl flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Reply size={20} className="sm:w-6 sm:h-6" />
+              <div>
+                <h3 className="text-lg sm:text-xl font-semibold">Reply to Customer</h3>
+                <p className="text-blue-100 text-xs sm:text-sm">{message?.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors"
+            >
+              <X size={18} className="sm:w-5 sm:h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="space-y-4">
+            {/* Original Message Preview */}
+            <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border-l-4 border-blue-500">
+              <h4 className="font-medium text-gray-800 mb-2 text-sm sm:text-base">Original Message:</h4>
+              <p className="text-gray-600 text-xs sm:text-sm italic">"{message?.message}"</p>
+              <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                <span>From: {message?.name}</span>
+                <span>Date: {new Date(message?.createdAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+
+            {/* Reply Form */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  placeholder="Email subject"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Reply
+                </label>
+                <textarea
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
+                  rows="6"
+                  placeholder="Type your reply here..."
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Buttons - Fixed */}
+        <div className="border-t border-gray-200 p-4 sm:p-6 flex-shrink-0 bg-gray-50 rounded-b-xl">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleSend}
+              disabled={isLoading || !replyText.trim()}
+              className="flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-2.5 sm:px-8 sm:py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl order-2 sm:order-1"
+            >
+              <Mail size={18} className="sm:w-5 sm:h-5" />
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+                  <span>Sending Email...</span>
+                </>
+              ) : (
+                <span>Send Email to Customer</span>
+              )}
+            </button>
+            <button
+              onClick={onClose}
+              disabled={isLoading}
+              className="flex items-center justify-center gap-2 bg-gray-500 text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base order-1 sm:order-2"
+            >
+              <X size={14} className="sm:w-4 sm:h-4" />
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ProductForm = ({ 
   isEdit = false, 
   formData, 
@@ -178,17 +297,23 @@ export default function Admin() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [replyLoading, setReplyLoading] = useState(false);
+  const [deletingMessageId, setDeletingMessageId] = useState(null);
+  
+  // Order states
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [ordersError, setOrdersError] = useState(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
   const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    stock: '',
-    category: '',
-    description: '',
-    image: null
-  });
+    name: '', price: '', stock: '', category: '', description: '', image: null});
 
-  // Fetch products on component mount (after authentication)
   useEffect(() => {
     const fetchProducts = async () => {
       if (!isAuthenticated) return;
@@ -206,7 +331,6 @@ export default function Admin() {
     fetchProducts();
   }, [isAuthenticated]);
 
-  // Authentication check on component mount
   useEffect(() => {
     const checkAdminAuth = () => {
       const token = localStorage.getItem('token');
@@ -216,7 +340,6 @@ export default function Admin() {
 
       console.log('Checking admin auth:', { token, userRole, userEmail, isAuth });
 
-      // Check if user is authenticated and has admin role
       if (!token || !isAuth || userRole !== 'admin') {
         console.log('Access denied - not admin or not authenticated');
         alert('Access denied. Admin credentials required.');
@@ -224,7 +347,6 @@ export default function Admin() {
         return;
       }
 
-      // If all checks pass, user is authenticated admin
       setIsAuthenticated(true);
       setAdminEmail(userEmail);
       console.log('Admin access granted');
@@ -233,17 +355,199 @@ export default function Admin() {
     checkAdminAuth();
   }, [navigate]);
 
-  // Admin logout function
+  const adminToken = localStorage.getItem('adminToken');
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const res = await getAllContactMessages(adminToken);
+        setMessages(res.data || res);
+      } catch (err) {
+        setError(err.message || 'Failed to fetch messages');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchMessages();
+    }
+  }, [adminToken, isAuthenticated]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        setOrdersLoading(true);
+        const token = localStorage.getItem('token');
+        const response = await getAllOrders(token);
+        setOrders(response.data || []);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        setOrdersError(error.message || 'Failed to fetch orders');
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [isAuthenticated]);
+
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    try {
+      setUpdatingOrderId(orderId);
+      const token = localStorage.getItem('token');
+      
+      await updateOrderStatus(orderId, newStatus, token);
+      
+      // Update local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          (order._id || order.id) === orderId 
+            ? { ...order, status: newStatus }
+            : order
+        )
+      );
+      
+      alert(`Order status updated to ${newStatus}!`);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      alert(`Failed to update order status: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const handleReply = (message) => {
+    setSelectedMessage(message);
+    setShowReplyModal(true);
+  };
+
+  const handleSendReply = async (replyData) => {
+    try {
+      setReplyLoading(true);
+      console.log('Sending reply with full replyData object:', replyData);
+      
+      // Extract the reply message from replyData
+      // The ReplyModal sends: { to, subject, message, originalMessage }
+      const replyMessage = replyData.message;
+      const messageId = replyData.originalMessage._id;
+      
+      console.log('Extracted data:', {
+        messageId: messageId,
+        replyMessage: replyMessage,
+        replyLength: replyMessage?.length
+      });
+      
+      // Validate that we have a reply message
+      if (!replyMessage || !replyMessage.trim()) {
+        alert('Please enter a reply message before sending.');
+        setReplyLoading(false);
+        return;
+      }
+      
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        alert('Authentication required. Please login again.');
+        navigate('/login');
+        return;
+      }
+      
+      console.log('About to call API with:', {
+        messageId: messageId,
+        replyMessage: replyMessage.trim(),
+        tokenExists: !!token
+      });
+      
+      // Call the actual API to send the reply
+      const response = await replyToMessage(
+        messageId, 
+        replyMessage.trim(), 
+        token
+      );
+      
+      console.log('Reply API response:', response);
+      
+      if (response.status === 200 || response.status === 201) {
+        alert('Reply sent successfully!');
+        setShowReplyModal(false);
+        setSelectedMessage(null);
+        
+        // Optionally refresh messages to show updated status
+        // You might want to add a "replied" status or remove the message from the list
+      } else {
+        throw new Error(`Unexpected response status: ${response.status}`);
+      }
+      
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      console.error('Full error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        config: error.config
+      });
+      
+      let errorMessage = 'Failed to send reply. Please try again.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = `Failed to send reply: ${error.response.data.message}`;
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Authentication failed. Please login again.';
+        setTimeout(() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('userEmail');
+          localStorage.removeItem('isAuthenticated');
+          navigate('/login');
+        }, 1000);
+      } else if (error.response?.status === 400) {
+        errorMessage = 'Invalid request. Please check your reply message.';
+      } else if (error.message) {
+        errorMessage = `Failed to send reply: ${error.message}`;
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setReplyLoading(false);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    if (window.confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
+      try {
+        setDeletingMessageId(messageId);
+        
+        console.log('Deleting message:', messageId);
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Remove message from local state
+        setMessages(prevMessages => prevMessages.filter(msg => msg._id !== messageId));
+        
+        alert('Message deleted successfully!');
+        
+      } catch (error) {
+        console.error('Error deleting message:', error);
+        alert('Failed to delete message. Please try again.');
+      } finally {
+        setDeletingMessageId(null);
+      }
+    }
+  };
+
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
-      // Clear all localStorage data
       localStorage.removeItem('token');
       localStorage.removeItem('userRole');
       localStorage.removeItem('userEmail');
       localStorage.removeItem('isAuthenticated');
       
       console.log('Admin logged out');
-      navigate('/'); // Navigate to home instead of login
+      navigate('/'); 
     }
   };
 
@@ -285,7 +589,7 @@ export default function Admin() {
       stock: product.stock.toString(),
       category: product.category,
       description: product.description || '',
-      image: null // Don't prefill image, let user choose new one if needed
+      image: null 
     });
     setShowEditForm(true);
   };
@@ -309,22 +613,20 @@ export default function Admin() {
       try {
         setIsLoading(true);
         
-        console.log('Attempting to delete product with ID:', productId); // Debug log
+        console.log('Attempting to delete product with ID:', productId); 
         
-        // Get token from localStorage
         let token = localStorage.getItem('token');
         
-        // If admin token, we need to get a real token by calling the login API
         if (token === 'admin-token') {
           try {
             const adminCredentials = {
               email: localStorage.getItem('userEmail'),
-              password: 'admin123' // Admin password
+              password: 'admin123'
             };
             
             const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
             token = loginResponse.data.token;
-            localStorage.setItem('token', token); // Update with real token
+            localStorage.setItem('token', token);
           } catch (error) {
             console.error('Failed to get admin token:', error);
             alert('Failed to authenticate admin. Please login again.');
@@ -336,14 +638,13 @@ export default function Admin() {
         const response = await deleteProduct(productId, token);
         
         if (response.status === 200) {
-          // Refresh products from API to show updated list
           const refreshResponse = await getAllProducts();
           setProducts(refreshResponse.data);
           alert('Product deleted successfully!');
         }
       } catch (error) {
         console.error('Error deleting product:', error);
-        console.error('Error response:', error.response?.data); // More detailed error log
+        console.error('Error response:', error.response?.data); 
         
         if (error.response?.status === 401) {
           alert('Authentication failed. Please login again.');
@@ -361,26 +662,23 @@ export default function Admin() {
 
   const handleSubmit = async () => {
     if (showEditForm) {
-      // Update existing product via API
       try {
         setIsLoading(true);
         
-        console.log('Attempting to update product with ID:', editingProduct._id || editingProduct.id); // Debug log
+        console.log('Attempting to update product with ID:', editingProduct._id || editingProduct.id); 
         
-        // Get token from localStorage
         let token = localStorage.getItem('token');
         
-        // If admin token, we need to get a real token by calling the login API
         if (token === 'admin-token') {
           try {
             const adminCredentials = {
               email: localStorage.getItem('userEmail'),
-              password: 'admin123' // Admin password
+              password: 'admin123' 
             };
             
             const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
             token = loginResponse.data.token;
-            localStorage.setItem('token', token); // Update with real token
+            localStorage.setItem('token', token); 
           } catch (error) {
             console.error('Failed to get admin token:', error);
             alert('Failed to authenticate admin. Please login again.');
@@ -396,13 +694,12 @@ export default function Admin() {
           alert('Product updated successfully!');
           closeForm();
           
-          // Refresh products from API to show updated product
           const refreshResponse = await getAllProducts();
           setProducts(refreshResponse.data);
         }
       } catch (error) {
         console.error('Error updating product:', error);
-        console.error('Error response:', error.response?.data); // More detailed error log
+        console.error('Error response:', error.response?.data); 
         
         if (error.response?.status === 401) {
           alert('Authentication failed. Please login again.');
@@ -416,24 +713,21 @@ export default function Admin() {
         setIsLoading(false);
       }
     } else {
-      // Add new product via API
       try {
         setIsLoading(true);
         
-        // Get token from localStorage
         let token = localStorage.getItem('token');
         
-        // If admin token, we need to get a real token by calling the login API
         if (token === 'admin-token') {
           try {
             const adminCredentials = {
               email: localStorage.getItem('userEmail'),
-              password: 'admin123' // Admin password
+              password: 'admin123'
             };
             
             const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
             token = loginResponse.data.token;
-            localStorage.setItem('token', token); // Update with real token
+            localStorage.setItem('token', token); 
           } catch (error) {
             console.error('Failed to get admin token:', error);
             alert('Failed to authenticate admin. Please login again.');
@@ -448,7 +742,6 @@ export default function Admin() {
           alert('Product added successfully!');
           closeForm();
           
-          // Refresh products from API to show new product
           const refreshResponse = await getAllProducts();
           setProducts(refreshResponse.data);
         }
@@ -466,7 +759,6 @@ export default function Admin() {
     }
   };
 
-  // Show loading while checking authentication
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -480,130 +772,36 @@ export default function Admin() {
 
   return (
     <>
-      
-      
       <div className="min-h-screen bg-gray-50">
-        {/* Header with Admin Info and Logout */}
-        <div className="bg-blue-600 text-white py-12">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center">
-              <div className="text-center flex-1">
-                <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
-                <p className="text-blue-100">Manage your products and inventory</p>
-              </div>
-              <div className="text-right">
-                <p className="text-blue-100 mb-2">Welcome, Admin</p>
-                <p className="text-sm text-blue-200 mb-3">{adminEmail}</p>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition-colors text-sm cursor-pointer"
-                >
-                  <LogOut size={14} />
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Header */}
+        <Header handleLogout={handleLogout} />
 
-        {/* Main Content */}
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            {/* Product Management Header */}
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Product Management</h2>
-              <button
-                onClick={openAddForm}
-                className="flex items-center cursor-pointer gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                <Plus size={16} />
-                Add Product
-              </button>
-            </div>
+        {/* Navigation Component with all props */}
+        <Navigation 
+          // Product-related props
+          products={products}
+          onAddProduct={openAddForm}
+          onEditProduct={openEditForm}
+          onDeleteProduct={handleDelete}
+          isLoading={isLoading}
+          
+          // Message-related props
+          messages={messages}
+          onReplyMessage={handleReply}
+          onDeleteMessage={handleDeleteMessage}
+          deletingMessageId={deletingMessageId}
+          loading={loading}
+          error={error}
 
-            {/* Product Table */}
-            <div className="overflow-x-auto">
-              {products.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-gray-400 mb-4">
-                    <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Products Yet</h3>
-                  <p className="text-gray-500 mb-4">Get started by adding your first product to the inventory.</p>
-                  <button
-                    onClick={openAddForm}
-                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors cursor-pointer"
-                  >
-                    <Plus size={16} />
-                    Add Your First Product
-                  </button>
-                </div>
-              ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Product</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Category</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Price</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Stock</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((product) => (
-                      <tr key={product._id || product.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={product.imageUrl || product.image || 'https://via.placeholder.com/48x48?text=No+Image'}
-                              alt={product.name}
-                              className="w-12 h-12 object-cover rounded-lg border"
-                              onError={(e) => {
-                                e.target.src = 'https://via.placeholder.com/48x48?text=No+Image';
-                              }}
-                            />
-                            <div>
-                              <h3 className="font-medium text-gray-900">{product.name}</h3>
-                              <p className="text-sm text-gray-500">{product.description}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-gray-700">{product.category}</td>
-                        <td className="py-4 px-4 text-gray-700">GH₵{product.price}</td>
-                        <td className="py-4 px-4">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {product.stock} in stock
-                          </span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openEditForm(product)}
-                              className="p-2 text-blue-600 cursor-pointer hover:bg-blue-50 rounded-md transition-colors"
-                            >
-                              <Edit size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(product._id || product.id)}
-                              disabled={isLoading}
-                              className="p-2 text-red-600 cursor-pointer hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        </div>
+          // Order-related props
+          orders={orders}
+          onUpdateOrderStatus={handleUpdateOrderStatus}
+          updatingOrderId={updatingOrderId}
+          ordersLoading={ordersLoading}
+          ordersError={ordersError}
+        />
 
-        {/* Add Product Modal */}
+        {/* Product Forms */}
         {showAddForm && (
           <ProductForm
             isEdit={false}
@@ -617,7 +815,6 @@ export default function Admin() {
           />
         )}
 
-        {/* Edit Product Modal */}
         {showEditForm && (
           <ProductForm
             isEdit={true}
@@ -630,9 +827,19 @@ export default function Admin() {
             editingProduct={editingProduct}
           />
         )}
-      </div>
 
-      <Footer />
+        {/* Reply Modal */}
+        <ReplyModal
+          message={selectedMessage}
+          isOpen={showReplyModal}
+          onClose={() => {
+            setShowReplyModal(false);
+            setSelectedMessage(null);
+          }}
+          onSend={handleSendReply}
+          isLoading={replyLoading}
+        />
+      </div>
     </>
   );
 }
