@@ -55,8 +55,19 @@ export default function Cart() {
         
         // Transform cart data to ensure consistent structure
         return Array.isArray(cartData) ? cartData.map(item => {
-            // FIXED: Extract product ID from nested product object
-            const productId = item.product?._id || item.productId || item._id || item.id;
+            // CORRECTED: Based on typical cart API responses, try these in order:
+            let productId = null;
+            
+            if (item.product && item.product._id) {
+                productId = item.product._id;  // Nested product object
+                console.log(`Using nested product ID for ${item.name}: ${productId}`);
+            } else if (item.productId) {
+                productId = item.productId;    // Direct productId field
+                console.log(`Using direct product ID for ${item.name}: ${productId}`);
+            } else {
+                console.error('❌ NO PRODUCT ID FOUND for item:', item);
+                // Don't use item._id as fallback - it's wrong!
+            }
             
             console.log('=== ITEM PROCESSING DEBUG ===');
             console.log('Processing cart item:', item);
@@ -66,7 +77,7 @@ export default function Cart() {
             console.log('=== END ITEM PROCESSING ===');
             
             return {
-                productId: productId,  // Use the actual product ID
+                productId: productId,  // Only use actual product ID
                 cartItemId: item._id,  // Keep cart item ID separate
                 _id: item._id,         // Keep for compatibility
                 name: item.name || item.productName || item.product?.name || 'Unknown Product',
@@ -75,6 +86,13 @@ export default function Cart() {
                 image: item.image || item.imageUrl || item.product?.image || item.product?.imageUrl,
                 category: item.category || item.product?.category
             };
+        }).filter(item => {
+            // Filter out items without productId
+            if (!item.productId) {
+                console.error('❌ Removing item without productId:', item.name);
+                return false;
+            }
+            return true;
         }) : [];
     };
 
@@ -95,6 +113,43 @@ export default function Cart() {
             console.log('Response data:', response.data);
             console.log('Response data type:', typeof response.data);
             console.log('Response data stringified:', JSON.stringify(response.data, null, 2));
+            
+            // === SPECIFIC CART STRUCTURE DEBUG ===
+            console.log('=== DETAILED CART ITEM ANALYSIS ===');
+            let cartData = response.data || [];
+
+            // Handle different possible response structures
+            if (cartData.items) {
+                cartData = cartData.items;
+            } else if (cartData.cart && cartData.cart.items) {
+                cartData = cartData.cart.items;
+            }
+
+            if (Array.isArray(cartData) && cartData.length > 0) {
+                const firstItem = cartData[0];
+                console.log('First cart item structure:', JSON.stringify(firstItem, null, 2));
+                console.log('First item keys:', Object.keys(firstItem));
+                
+                // Check for product ID in different locations
+                console.log('Product ID Analysis:');
+                console.log('- item._id:', firstItem._id);
+                console.log('- item.productId:', firstItem.productId);
+                console.log('- item.product:', firstItem.product);
+                console.log('- item.product?._id:', firstItem.product?._id);
+                console.log('- item.id:', firstItem.id);
+                
+                // Check what we should actually use as productId
+                console.log('Which field contains the actual product ID?');
+                if (firstItem.product && firstItem.product._id) {
+                    console.log('✅ Use item.product._id:', firstItem.product._id);
+                } else if (firstItem.productId) {
+                    console.log('✅ Use item.productId:', firstItem.productId);
+                } else {
+                    console.log('❌ No clear product ID found - this is the problem!');
+                    console.log('Available fields:', Object.keys(firstItem));
+                }
+            }
+            console.log('=== END DETAILED ANALYSIS ===');
             
             // Check if data is array or object
             if (Array.isArray(response.data)) {

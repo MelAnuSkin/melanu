@@ -86,21 +86,39 @@ export default function Checkout() {
                     cartData = cartData.cart.items;
                 }
                 
-                // Transform cart data to ensure consistent structure
+                // Transform cart data to ensure consistent structure - FIXED VERSION
                 const transformedItems = Array.isArray(cartData) ? cartData.map(item => {
-                    // FIXED: Extract product ID from nested product object  
-                    const productId = item.product?._id || item.productId || item._id || item.id;
+                    // CORRECTED: Based on typical cart API responses, try these in order:
+                    let productId = null;
+                    
+                    if (item.product && item.product._id) {
+                        productId = item.product._id;  // Nested product object
+                        console.log(`Using nested product ID for ${item.name}: ${productId}`);
+                    } else if (item.productId) {
+                        productId = item.productId;    // Direct productId field
+                        console.log(`Using direct product ID for ${item.name}: ${productId}`);
+                    } else {
+                        console.error('❌ NO PRODUCT ID FOUND for item:', item);
+                        // Don't use item._id as fallback - it's wrong!
+                    }
                     
                     return {
-                        productId: productId,  // Use the actual product ID
-                        cartItemId: item._id,  // Keep cart item ID separate
-                        _id: item._id,         // Keep for compatibility
+                        productId: productId,          // Only use actual product ID
+                        cartItemId: item._id,          // Cart item ID for reference
+                        _id: item._id,                 // Keep for compatibility
                         name: item.name || item.productName || item.product?.name || 'Unknown Product',
                         price: parseFloat(item.price || item.productPrice || item.product?.price || 0),
                         quantity: parseInt(item.quantity || 1),
                         image: item.image || item.imageUrl || item.product?.image || item.product?.imageUrl,
                         category: item.category || item.product?.category
                     };
+                }).filter(item => {
+                    // VALIDATION: Filter out items without productId
+                    if (!item.productId) {
+                        console.error('❌ Removing item without productId:', item.name);
+                        return false;
+                    }
+                    return true;
                 }) : [];
                 
                 console.log('Checkout transformed items:', transformedItems);
@@ -214,7 +232,7 @@ export default function Checkout() {
     const shipping = 0; // Free shipping
     const total = subtotal + shipping;
 
-    // Handle payment process - NOW WITH PROPER ORDER CREATION
+    // Handle payment process - FIXED WITH PROPER PRODUCT ID HANDLING
     const handleMakePayment = async () => {
         if (!Array.isArray(cartItems) || cartItems.length === 0) {
             alert('Your cart is empty. Please add items before making payment.');
@@ -254,19 +272,33 @@ export default function Checkout() {
             }
 
             console.log('Creating order with userId:', userId);
-        console.log('Token payload debug:');
-        try {
-            const tokenPayload = JSON.parse(atob(token.split('.')[1]));
-            console.log('Full token payload:', tokenPayload);
-        } catch (e) {
-            console.error('Could not decode token:', e);
-        }
+            console.log('Token payload debug:');
+            try {
+                const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+                console.log('Full token payload:', tokenPayload);
+            } catch (e) {
+                console.error('Could not decode token:', e);
+            }
 
-            // STEP 1: Create the order first - Match backend expectations exactly
+            // STEP 1: Create the order - FIXED productId extraction
             const orderData = {
-                items: cartItems.map(item => ({
-                    quantity: item.quantity  // Only send quantity, no productId
-                })),
+                items: cartItems.map(item => {
+                    // FIXED: Only use productId, never _id for product identification
+                    const productId = item.productId;  // This should now be the actual product ID
+                    
+                    console.log(`Mapping item: ${item.name} -> productId: ${productId}, quantity: ${item.quantity}`);
+                    
+                    // Validate that we have a productId
+                    if (!productId) {
+                        console.error('Missing productId for item:', item);
+                        throw new Error(`Product ID missing for item: ${item.name}`);
+                    }
+                    
+                    return {
+                        productId: productId,
+                        quantity: item.quantity
+                    };
+                }),
                 shippingAddress: {
                     street: formData.address,
                     city: formData.city,
@@ -276,8 +308,18 @@ export default function Checkout() {
                 orderNotes: formData.orderNotes
             };
 
-            console.log('Creating order with data:', orderData);
-            console.log('Individual items being sent (only quantities):', orderData.items);
+            console.log('=== ORDER DATA DEBUG ===');
+            console.log('Complete order data:', JSON.stringify(orderData, null, 2));
+            console.log('Items being sent to backend:', orderData.items);
+            
+            // Validate all items have productIds before sending
+            const itemsWithoutProductId = orderData.items.filter(item => !item.productId);
+            if (itemsWithoutProductId.length > 0) {
+                console.error('Items missing productId:', itemsWithoutProductId);
+                throw new Error('Some items are missing product IDs. Please refresh and try again.');
+            }
+            
+            console.log('=== END ORDER DATA DEBUG ===');
             
             // Create order using the updated function that includes userId
             const orderResponse = await createOrder(orderData, userId, token);
