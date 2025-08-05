@@ -26,10 +26,18 @@ export default function Footer() {
                     <div>
                         <h4 className="text-lg font-bold text-amber-100 mb-4">Explore</h4>
                         <ul className="space-y-2">
-                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">Body Care</li>
-                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">Hair Care</li>
-                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">Face Care</li>
-                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">Men's Collection</li>
+                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">
+                                <Link to='/products'>
+                            Body Care</Link></li>
+                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">
+                                 <Link to='/products'>
+                                 Hair Care</Link></li>
+                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">
+                                <Link to='/products'>
+                                Face Care</Link></li>
+                            <li className="text-amber-200 hover:text-amber-100 text-sm transition-colors duration-200 cursor-pointer">
+                                <Link to='/products'>
+                                Men's Collection</Link></li>
                         </ul>
                     </div>
 

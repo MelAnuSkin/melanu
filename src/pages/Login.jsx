@@ -68,14 +68,7 @@ export default function Login() {
             <Navbar />
 
             <div className="bg-[#FFFFFF] flex items-center justify-center mb-10">
-                <div className="h-screen w-screen mt-15" >
-                    <Link to="/">
-                        <button className="flex items-center text-amber-700 hover:text-amber-800 mb-8 transition-colors cursor-pointer ml-96">
-                            <ChevronLeft size={16} />
-                            <span className="text-sm">Back to Home</span>
-                        </button>
-                    </Link>
-
+                <div className="h-screen w-screen mt-15">
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-bold text-amber-800 font-mono mb-2">
                             Welcome Back

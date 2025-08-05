@@ -142,7 +142,6 @@ export default function ProductRange() {
                                     className="w-full h-full object-cover"/>
                                 </div>
                                 <h4 className="font-semibold text-amber-900 mb-2 font-serif">Shea Body Butter</h4>
-                                <p className="text-amber-700 text-sm font-bold">From GH₵60</p>
                             </div>
 
                             <div className="bg-[#FCF6ED] rounded-xl p-4 shadow-md">
@@ -153,7 +152,6 @@ export default function ProductRange() {
                                     className="w-full h-full object-cover"/>
                                 </div>
                                 <h4 className="font-semibold text-amber-900 mb-2 font-serif">Hair Treatment</h4>
-                                <p className="text-amber-700 text-sm font-bold">From GH₵50</p>
                             </div>
                         </div>
                     </div>

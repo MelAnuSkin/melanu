@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import image11 from "../assets/images/image11.jpg";
 import Footer from "../components/Footer";
 import { subscribeToNewsletter } from "../api/client.js"; 
+import { Link } from 'react-router';
 
 export default function Blog() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -126,9 +127,11 @@ export default function Blog() {
                                     <h2 className="text-2xl lg:text-3xl font-bold text-amber-800 mb-4 leading-tight">Behind the Butter: Tradition, Craft, and Community</h2>
                                     <p className="text-amber-700 mb-6 leading-relaxed text-lg">Step into the heart of local shea butter making, where skilled hands, generations of knowledge, and raw shea nuts come together to create one of nature's richest skincare treasures.</p>
 
-                                    <button className="text-amber-600 hover:text-amber-700 font-medium text-sm inline-flex items-center cursor-pointer">Read More
+                                    <Link to='https://www.instagram.com/reel/DHJAdyiM_6f/?igsh=cW4xdXI2aDJmbndt'>
+                                    <button className="text-amber-600 hover:text-amber-700 font-medium text-sm inline-flex items-center cursor-pointer"
+                                    >Read More
                                         <ArrowRight className="w-3 h-3 ml-1"/>
-                                    </button>
+                                    </button></Link>
                                 </div>
                             </div>
                         </div>
@@ -152,9 +155,11 @@ export default function Blog() {
                                     <h2 className="text-2xl lg:text-3xl font-bold text-amber-800 mb-4 leading-tight">Glow Naturally: The Secret's in the Butter</h2>
                                     <p className="text-amber-700 mb-6 leading-relaxed text-lg">For soft, radiant skin, go beyond lotion—reach for body butter enriched with natural oils. Just a small scoop locks in moisture, boosts elasticity, and leaves your skin feeling luxuriously smooth all day long.</p>
 
-                                    <button className="text-amber-600 hover:text-amber-700 font-medium text-sm inline-flex items-center cursor-pointer">Read More
+                                       <Link to='https://www.instagram.com/p/C3m-BjTMs5u/?igsh=MTB4bWxhZ290aWFiOA=='>
+                                    <button className="text-amber-600 hover:text-amber-700 font-medium text-sm inline-flex items-center cursor-pointer"
+                                    >Read More
                                         <ArrowRight className="w-3 h-3 ml-1"/>
-                                    </button>
+                                    </button></Link> 
                                 </div>
                             </div>
                         </div>
