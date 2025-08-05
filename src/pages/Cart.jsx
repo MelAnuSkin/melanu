@@ -462,20 +462,21 @@ export default function Cart() {
             {isAuthenticated ? <UserNav /> : <Navbar />}
 
             <div className="min-h-screen bg-white">
-                <div className="bg-[#F0D09F] px-4 py-16">
+                {/* Hero Section - Mobile Responsive */}
+                <div className="bg-[#F0D09F] px-4 py-8 sm:py-12 lg:py-16">
                     <div className="max-w-6xl mx-auto">
                         <Link to="/products">
-                            <button className="flex items-center text-amber-800 font-mono hover:bg-[#EADAC8] hover:rounded-full hover:px-3 cursor-pointer mb-4">
-                                <ArrowLeft className="w-5 h-5 mr-2" />
+                            <button className="flex items-center text-amber-800 font-mono hover:bg-[#EADAC8] hover:rounded-full hover:px-3 cursor-pointer mb-4 text-sm sm:text-base">
+                                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                                 Continue Shopping
                             </button>
                         </Link>
-                        <div className="flex justify-between items-center">
-                            <h1 className="text-4xl font-bold font-mono text-amber-800">Shopping Cart</h1>
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-mono text-amber-800">Shopping Cart</h1>
                             {cartItems.length > 0 && (
                                 <button 
                                     onClick={handleClearCart}
-                                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 cursor-pointer transition-colors"
+                                    className="bg-red-600 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-red-700 cursor-pointer transition-colors text-sm sm:text-base self-start sm:self-auto"
                                 >
                                     Clear Cart
                                 </button>
@@ -484,122 +485,149 @@ export default function Cart() {
                     </div>
                 </div>
 
-                <div className="max-w-6xl mx-auto px-4 py-8">
+                <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
                     {!Array.isArray(cartItems) || cartItems.length === 0 ? (
-                        <div className="text-center py-16">
+                        <div className="text-center py-12 sm:py-16">
                             <div className="text-amber-600 mb-4">
-                                <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="mx-auto h-12 w-12 sm:h-16 sm:w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 3H3m4 10v6a1 1 0 001 1h10a1 1 0 001-1v-6m-10 0V9a1 1 0 011-1h8a1 1 0 011 1v4.01" />
                                 </svg>
                             </div>
-                            <h2 className="text-2xl font-bold text-amber-800 mb-2">Your Cart is Empty</h2>
-                            <p className="text-amber-600 mb-6">Add some products to get started!</p>
+                            <h2 className="text-xl sm:text-2xl font-bold text-amber-800 mb-2">Your Cart is Empty</h2>
+                            <p className="text-amber-600 mb-6 text-sm sm:text-base">Add some products to get started!</p>
                             <Link to="/products">
-                                <button className="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 cursor-pointer">
+                                <button className="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 cursor-pointer text-sm sm:text-base">
                                     Start Shopping
                                 </button>
                             </Link>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <div className="lg:col-span-2 space-y-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                            {/* Cart Items - Mobile First */}
+                            <div className="lg:col-span-2 space-y-3 sm:space-y-4">
                                 {cartItems.map((item) => {
                                     const itemId = item.productId || item._id;
                                     const isUpdating = updating[itemId];
                                     const isRemoving = removing[itemId];
                                     
                                     return (
-                                        <div key={itemId} className={`bg-white rounded-lg p-7 shadow-sm border border-amber-500 transition-opacity ${(isUpdating || isRemoving) ? 'opacity-50' : ''}`}>
-                                            <div className="flex items-center space-x-4">
-                                                <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
-                                                    <img
-                                                        src={item.image || 'https://via.placeholder.com/96x96?text=Product'}
-                                                        alt={item.name}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            e.target.src = 'https://via.placeholder.com/96x96?text=Product';
-                                                        }}
-                                                    />
-                                                </div>
-
-                                                <div className="flex-1">
-                                                    <h3 className="font-medium text-amber-800 mb-2">{item.name}</h3>
-                                                    <div className="flex items-center space-x-2">
-                                                        <span className="text-amber-700 font-bold text-lg">GH₵{item.price.toFixed(2)}</span>
+                                        <div key={itemId} className={`bg-white rounded-lg p-4 sm:p-6 lg:p-7 shadow-sm border border-amber-500 transition-opacity ${(isUpdating || isRemoving) ? 'opacity-50' : ''}`}>
+                                            {/* Mobile Layout: Vertical Stack */}
+                                            <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                                                {/* Product Image and Info */}
+                                                <div className="flex items-start space-x-4 sm:space-x-0">
+                                                    <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                                        <img
+                                                            src={item.image || 'https://via.placeholder.com/96x96?text=Product'}
+                                                            alt={item.name}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.target.src = 'https://via.placeholder.com/96x96?text=Product';
+                                                            }}
+                                                        />
                                                     </div>
-                                                </div>
 
-                                                <div className="flex items-center space-x-3">
+                                                    <div className="flex-1 min-w-0 sm:ml-4">
+                                                        <h3 className="font-medium text-amber-800 mb-2 text-sm sm:text-base leading-tight">{item.name}</h3>
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-amber-700 font-bold text-base sm:text-lg">GH₵{item.price.toFixed(2)}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Remove Button - Mobile Top Right */}
                                                     <button 
-                                                        onClick={() => handleUpdateQuantity(itemId, item.quantity - 1)}
-                                                        disabled={isUpdating || isRemoving || item.quantity <= 1}
-                                                        className="w-8 h-8 rounded-full cursor-pointer border border-amber-600 flex items-center justify-center hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                                    >
-                                                        {isUpdating ? (
-                                                            <div className="animate-spin rounded-full h-4 w-4 border border-amber-600 border-t-transparent"></div>
-                                                        ) : (
-                                                            <Minus className="w-4 h-4" />
-                                                        )}
-                                                    </button>
-                                                    <span className="w-8 text-center font-medium">{item.quantity}</span>
-                                                    <button 
-                                                        onClick={() => handleUpdateQuantity(itemId, item.quantity + 1)}
+                                                        onClick={() => handleRemoveItem(itemId)}
                                                         disabled={isUpdating || isRemoving}
-                                                        className="w-8 h-8 rounded-full cursor-pointer border border-amber-600 flex items-center justify-center hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                        className="text-amber-600 hover:text-amber-800 hover:bg-[#EADAC8] hover:rounded-lg p-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors sm:hidden"
                                                     >
-                                                        {isUpdating ? (
-                                                            <div className="animate-spin rounded-full h-4 w-4 border border-amber-600 border-t-transparent"></div>
+                                                        {isRemoving ? (
+                                                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-amber-600 border-t-transparent"></div>
                                                         ) : (
-                                                            <Plus className="w-4 h-4" />
+                                                            <Trash className="w-4 h-4" />
                                                         )}
                                                     </button>
                                                 </div>
 
-                                                <div className="text-right">
-                                                    <div className="font-bold text-lg text-amber-700">
-                                                        GH₵{(item.price * item.quantity).toFixed(2)}
+                                                {/* Quantity Controls and Price - Mobile Bottom */}
+                                                <div className="flex items-center justify-between sm:flex-col sm:items-end sm:space-y-4">
+                                                    {/* Quantity Controls */}
+                                                    <div className="flex items-center space-x-3">
+                                                        <button 
+                                                            onClick={() => handleUpdateQuantity(itemId, item.quantity - 1)}
+                                                            disabled={isUpdating || isRemoving || item.quantity <= 1}
+                                                            className="w-8 h-8 rounded-full cursor-pointer border border-amber-600 flex items-center justify-center hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            {isUpdating ? (
+                                                                <div className="animate-spin rounded-full h-3 w-3 border border-amber-600 border-t-transparent"></div>
+                                                            ) : (
+                                                                <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                            )}
+                                                        </button>
+                                                        <span className="w-8 text-center font-medium text-sm sm:text-base">{item.quantity}</span>
+                                                        <button 
+                                                            onClick={() => handleUpdateQuantity(itemId, item.quantity + 1)}
+                                                            disabled={isUpdating || isRemoving}
+                                                            className="w-8 h-8 rounded-full cursor-pointer border border-amber-600 flex items-center justify-center hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            {isUpdating ? (
+                                                                <div className="animate-spin rounded-full h-3 w-3 border border-amber-600 border-t-transparent"></div>
+                                                            ) : (
+                                                                <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                            )}
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Total Price and Remove Button (Desktop) */}
+                                                    <div className="flex items-center space-x-4">
+                                                        <div className="text-right">
+                                                            <div className="font-bold text-base sm:text-lg text-amber-700">
+                                                                GH₵{(item.price * item.quantity).toFixed(2)}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Remove Button - Desktop */}
+                                                        <button 
+                                                            onClick={() => handleRemoveItem(itemId)}
+                                                            disabled={isUpdating || isRemoving}
+                                                            className="text-amber-600 hover:text-amber-800 hover:bg-[#EADAC8] hover:rounded-lg hover:py-2 px-3 cursor-pointer p-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors hidden sm:block"
+                                                        >
+                                                            {isRemoving ? (
+                                                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-amber-600 border-t-transparent"></div>
+                                                            ) : (
+                                                                <Trash className="w-5 h-5" />
+                                                            )}
+                                                        </button>
                                                     </div>
                                                 </div>
-
-                                                <button 
-                                                    onClick={() => handleRemoveItem(itemId)}
-                                                    disabled={isUpdating || isRemoving}
-                                                    className="text-amber-600 hover:text-amber-800 hover:bg-[#EADAC8] hover:rounded-lg hover:py-2 px-3 cursor-pointer p-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                                >
-                                                    {isRemoving ? (
-                                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-amber-600 border-t-transparent"></div>
-                                                    ) : (
-                                                        <Trash className="w-5 h-5" />
-                                                    )}
-                                                </button>
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
 
-                            <div className="lg:col-span-1">
-                                <div className="bg-white rounded-lg p-6 shadow-sm border border-amber-500 sticky top-8">
-                                    <h2 className="text-xl font-mono font-bold text-amber-700 mb-6">Order Summary</h2>
+                            {/* Order Summary - Mobile Responsive */}
+                            <div className="lg:col-span-1 order-first lg:order-last">
+                                <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-amber-500 lg:sticky lg:top-8">
+                                    <h2 className="text-lg sm:text-xl font-mono font-bold text-amber-700 mb-4 sm:mb-6">Order Summary</h2>
 
-                                    <div className="space-y-4 mb-6">
-                                        <div className="flex justify-between">
+                                    <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+                                        <div className="flex justify-between text-sm sm:text-base">
                                             <span className="text-amber-700">Subtotal</span>
                                             <span className="text-amber-700">GH₵{subtotal.toFixed(2)}</span>
                                         </div>
 
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex justify-between items-center text-sm sm:text-base">
                                             <div className="flex items-center space-x-2">
-                                                <Truck className="w-4 h-4 text-amber-700" />
+                                                <Truck className="w-3 h-3 sm:w-4 sm:h-4 text-amber-700" />
                                                 <span className="text-amber-700">Shipping</span>
                                             </div>
                                             <span className="font-medium text-green-600">FREE</span>
                                         </div>
 
-                                        <div className="border-t border-amber-500 pt-4">
+                                        <div className="border-t border-amber-500 pt-3 sm:pt-4">
                                             <div className="flex justify-between">
-                                                <span className="text-lg font-bold text-amber-700">Total</span>
-                                                <span className="text-xl font-bold text-amber-700">GH₵{subtotal.toFixed(2)}</span>
+                                                <span className="text-base sm:text-lg font-bold text-amber-700">Total</span>
+                                                <span className="text-lg sm:text-xl font-bold text-amber-700">GH₵{subtotal.toFixed(2)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -607,12 +635,12 @@ export default function Cart() {
                                     <button 
                                         onClick={handleProceedToPayment}
                                         disabled={cartItems.length === 0}
-                                        className="w-full bg-amber-600 text-white cursor-pointer py-3 rounded-lg font-medium hover:bg-amber-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full bg-amber-600 text-white cursor-pointer py-3 rounded-lg font-medium hover:bg-amber-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                                     >
                                         Proceed to Payment
                                     </button>
 
-                                    <div className="mt-4 text-center text-sm text-amber-500">
+                                    <div className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-amber-500 space-y-1">
                                         <p>Secure checkout with 256-bit SSL encryption</p>
                                         <p>Free returns within 30 days</p>
                                     </div>

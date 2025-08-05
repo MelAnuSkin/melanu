@@ -105,100 +105,129 @@ export default function Blog() {
             {isAuthenticated ? <UserNav /> : <Navbar />}
 
             <div className="min-h-screen bg-white">
-                <div className="bg-[#F0D09F] px-4 py-18">
+                {/* Hero Section - Mobile Responsive */}
+                <div className="bg-[#F0D09F] px-4 py-12 sm:py-16 lg:py-18">
                     <div className="max-w-6xl mx-auto text-center">
-                        <h1 className="text-4xl md:text-5xl font-bold font-mono text-amber-800 mb-6">Wellness & Beauty Journal</h1>
-                        <p className="text-lg text-amber-800 font-mono max-w-2xl mx-auto leading-relaxed">Discover skincare wisdom, African beauty traditions, and stories from our SheaStrong community. Your guide to natural wellness.</p>
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-mono text-amber-800 mb-4 sm:mb-6 leading-tight">
+                            Wellness & Beauty Journal
+                        </h1>
+                        <p className="text-base sm:text-lg text-amber-800 font-mono max-w-2xl mx-auto leading-relaxed px-2 sm:px-0">
+                            Discover skincare wisdom, African beauty traditions, and stories from our SheaStrong community. Your guide to natural wellness.
+                        </p>
                     </div>
                 </div>
 
-                <div className="bg-white py-16 px-4 mt-5">
+                <div className="bg-white py-12 sm:py-16 px-4 mt-3 sm:mt-5">
                     <div className="max-w-7xl mx-auto">
+                        {/* First Blog Post - Mobile Responsive */}
                         <div className="bg-white rounded-lg shadow-sm border border-amber-300 overflow-hidden">
                             <div className="grid grid-cols-1 lg:grid-cols-2">
-                                <div className="relative">
+                                <div className="relative order-1 lg:order-1">
                                     <img 
                                         src={image10} 
                                         alt="blog image"
-                                        className="w-full h-full object-cover min-h-[400px]" />
+                                        className="w-full h-64 sm:h-80 lg:h-full object-cover lg:min-h-[400px]" 
+                                    />
                                 </div>
 
-                                <div className="p-8 flex flex-col justifty-center lg:p-12">
-                                    <h2 className="text-2xl lg:text-3xl font-bold text-amber-800 mb-4 leading-tight">Behind the Butter: Tradition, Craft, and Community</h2>
-                                    <p className="text-amber-700 mb-6 leading-relaxed text-lg">Step into the heart of local shea butter making, where skilled hands, generations of knowledge, and raw shea nuts come together to create one of nature's richest skincare treasures.</p>
+                                <div className="p-6 sm:p-8 lg:p-12 flex flex-col justify-center order-2 lg:order-2">
+                                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-amber-800 mb-3 sm:mb-4 leading-tight">
+                                        Behind the Butter: Tradition, Craft, and Community
+                                    </h2>
+                                    <p className="text-amber-700 mb-4 sm:mb-6 leading-relaxed text-base sm:text-lg">
+                                        Step into the heart of local shea butter making, where skilled hands, generations of knowledge, and raw shea nuts come together to create one of nature's richest skincare treasures.
+                                    </p>
 
                                     <Link to='https://www.instagram.com/reel/DHJAdyiM_6f/?igsh=cW4xdXI2aDJmbndt'>
-                                    <button className="text-amber-600 hover:text-amber-700 font-medium text-sm inline-flex items-center cursor-pointer"
-                                    >Read More
-                                        <ArrowRight className="w-3 h-3 ml-1"/>
-                                    </button></Link>
+                                        <button className="text-amber-600 hover:text-amber-700 font-medium text-sm inline-flex items-center cursor-pointer transition-colors">
+                                            Read More
+                                            <ArrowRight className="w-3 h-3 ml-1"/>
+                                        </button>
+                                    </Link>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white mt-20 mb-10">
-                        <div className="max-w-4xl mx-auto text-center">
-                            <h2 className="text-3xl lg:text-4xl text-amber-800 font-bold mb-6">Skincare Tips</h2>
+                    {/* Skincare Tips Section - Mobile Responsive */}
+                    <div className="bg-white mt-12 sm:mt-16 lg:mt-20 mb-6 sm:mb-10">
+                        <div className="max-w-4xl mx-auto text-center mb-8 sm:mb-12">
+                            <h2 className="text-2xl sm:text-3xl lg:text-4xl text-amber-800 font-bold mb-4 sm:mb-6">
+                                Skincare Tips
+                            </h2>
                         </div>
 
+                        {/* Second Blog Post - Mobile Responsive */}
                         <div className="bg-white rounded-lg shadow-sm border border-amber-300 overflow-hidden">
                             <div className="grid grid-cols-1 lg:grid-cols-2">
-                                <div className="relative">
+                                <div className="relative order-1 lg:order-1">
                                     <img 
                                         src={image11}
                                         alt="essential tips"
-                                        className="w-full h-full object-cover min-h-[400px]" />
+                                        className="w-full h-64 sm:h-80 lg:h-full object-cover lg:min-h-[400px]" 
+                                    />
                                 </div>
 
-                                <div className="p-8 flex flex-col justifty-center lg:p-12">
-                                    <h2 className="text-2xl lg:text-3xl font-bold text-amber-800 mb-4 leading-tight">Glow Naturally: The Secret's in the Butter</h2>
-                                    <p className="text-amber-700 mb-6 leading-relaxed text-lg">For soft, radiant skin, go beyond lotion—reach for body butter enriched with natural oils. Just a small scoop locks in moisture, boosts elasticity, and leaves your skin feeling luxuriously smooth all day long.</p>
+                                <div className="p-6 sm:p-8 lg:p-12 flex flex-col justify-center order-2 lg:order-2">
+                                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-amber-800 mb-3 sm:mb-4 leading-tight">
+                                        Glow Naturally: The Secret's in the Butter
+                                    </h2>
+                                    <p className="text-amber-700 mb-4 sm:mb-6 leading-relaxed text-base sm:text-lg">
+                                        For soft, radiant skin, go beyond lotion—reach for body butter enriched with natural oils. Just a small scoop locks in moisture, boosts elasticity, and leaves your skin feeling luxuriously smooth all day long.
+                                    </p>
 
-                                       <Link to='https://www.instagram.com/p/C3m-BjTMs5u/?igsh=MTB4bWxhZ290aWFiOA=='>
-                                    <button className="text-amber-600 hover:text-amber-700 font-medium text-sm inline-flex items-center cursor-pointer"
-                                    >Read More
-                                        <ArrowRight className="w-3 h-3 ml-1"/>
-                                    </button></Link> 
+                                    <Link to='https://www.instagram.com/p/C3m-BjTMs5u/?igsh=MTB4bWxhZ290aWFiOA=='>
+                                        <button className="text-amber-600 hover:text-amber-700 font-medium text-sm inline-flex items-center cursor-pointer transition-colors">
+                                            Read More
+                                            <ArrowRight className="w-3 h-3 ml-1"/>
+                                        </button>
+                                    </Link>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-[#F0D09F] px-4 py-18 mt-30">
+                    {/* Newsletter Section - Mobile Responsive */}
+                    <div className="bg-[#F0D09F] px-4 py-12 sm:py-16 lg:py-18 mt-16 sm:mt-24 lg:mt-30 rounded-lg">
                         <div className="max-w-6xl mx-auto text-center">
-                            <h3 className="text-2xl lg:text-3xl text-amber-800 mb-4 font-bold leading-tight">Never Miss A Story</h3>
-                            <p className="text-lg text-amber-800 max-w-2xl mx-auto leading-relaxed mb-5">Subscribe to get the latest wellness tips, beauty secrets, <br />
-                                and SheaStrong stories delivered to your inbox.</p>
+                            <h3 className="text-xl sm:text-2xl lg:text-3xl text-amber-800 mb-3 sm:mb-4 font-bold leading-tight">
+                                Never Miss A Story
+                            </h3>
+                            <p className="text-base sm:text-lg text-amber-800 max-w-2xl mx-auto leading-relaxed mb-4 sm:mb-5 px-2 sm:px-0">
+                                Subscribe to get the latest wellness tips, beauty secrets, 
+                                <span className="hidden sm:inline"><br /></span>
+                                <span className="sm:hidden"> </span>
+                                and SheaStrong stories delivered to your inbox.
+                            </p>
 
                             {/* Success Message */}
                             {message && (
-                                <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded max-w-md mx-auto">
+                                <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded max-w-md mx-auto text-sm sm:text-base">
                                     {message}
                                 </div>
                             )}
 
                             {/* Error Message */}
                             {error && (
-                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded max-w-md mx-auto">
+                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded max-w-md mx-auto text-sm sm:text-base">
                                     {error}
                                 </div>
                             )}
 
-                            {/* Newsletter Form */}
-                            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto mb-4">
+                            {/* Newsletter Form - Mobile Responsive */}
+                            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-md mx-auto mb-4">
                                 <input
                                     type="email"
                                     placeholder="Enter your email address"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="flex-1 px-4 py-3 bg-white border border-white-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" 
+                                    className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-white border border-white-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm sm:text-base" 
                                 />
 
                                 <button 
                                     type="submit"
                                     disabled={loading}
-                                    className="px-8 py-2 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-900 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-6 sm:px-8 py-2.5 sm:py-3 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-900 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                                 >
                                     {loading ? "Joining..." : "Join Now"}
                                 </button>
@@ -206,7 +235,7 @@ export default function Blog() {
 
                             {/* Login prompt for non-authenticated users */}
                             {!isAuthenticated && (
-                                <p className="text-amber-700 text-sm mt-2">
+                                <p className="text-amber-700 text-xs sm:text-sm mt-2">
                                     <span className="font-medium">Note:</span> Please log in to subscribe to our newsletter
                                 </p>
                             )}

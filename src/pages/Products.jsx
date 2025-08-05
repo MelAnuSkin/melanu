@@ -182,63 +182,75 @@ export default function Products() {
             {isAuthenticated ? <UserNav /> : <Navbar />}
 
             <div className="bg-[#F0D09F]">
-                <div className="py-16 px-4 bg-amber-100">
+                {/* Hero Section - Mobile Responsive */}
+                <div className="py-8 sm:py-12 lg:py-16 px-4 bg-amber-100">
                     <div className="max-w-4xl mx-auto text-center">
-                        <h1 className="text-4xl md:text-5xl font-serif text-amber-800 mb-6 font-bold">Shop Natural Skincare</h1>
-                        <p className="text-md md:text-lg text-amber-700 leading-relaxed max-w-3xl mx-auto">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif text-amber-800 mb-4 sm:mb-6 font-bold leading-tight">
+                            Shop Natural Skincare
+                        </h1>
+                        <p className="text-sm sm:text-base md:text-lg text-amber-700 leading-relaxed max-w-3xl mx-auto px-2 sm:px-0">
                             Discover our premium collection of African shea butter skincare
-                            <br />products, crafted with love and supporting communities through our <br />
+                            <span className="hidden sm:inline"><br /></span>
+                            <span className="sm:hidden"> </span>
+                            products, crafted with love and supporting communities through our 
+                            <span className="hidden sm:inline"><br /></span>
+                            <span className="sm:hidden"> </span>
                             SheaStrong Initiative.
                         </p>
                     </div>
                 </div>
 
-                {/* Show sign-in message for non-authenticated users */}
+                {/* Authentication Message - Mobile Responsive */}
                 {!isAuthenticated && (
-                    <div className="bg-white/70 backdrop-blur-sm py-4 px-4 border-b border-amber-200">
+                    <div className="bg-white/70 backdrop-blur-sm py-3 sm:py-4 px-4 border-b border-amber-200">
                         <div className="max-w-6xl mx-auto text-center">
-                            <div className="flex items-center justify-center gap-2 text-amber-800">
-                                <User size={18} />
-                                <span>Please </span>
-                                <Link to="/login">
-                                    <button className="text-amber-700 hover:text-amber-900 underline font-medium cursor-pointer">
-                                        sign in
-                                    </button>
-                                </Link>
-                                <span> or </span>
-                                <Link to="/signup">
-                                    <button className="text-amber-700 hover:text-amber-900 underline font-medium cursor-pointer">
-                                        create an account
-                                    </button>
-                                </Link>
-                                <span> to search and filter products.</span>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-amber-800 text-sm sm:text-base">
+                                <div className="flex items-center gap-2">
+                                    <User size={16} className="sm:w-[18px] sm:h-[18px]" />
+                                    <span>Please </span>
+                                    <Link to="/login">
+                                        <button className="text-amber-700 hover:text-amber-900 underline font-medium cursor-pointer">
+                                            sign in
+                                        </button>
+                                    </Link>
+                                    <span> or </span>
+                                    <Link to="/signup">
+                                        <button className="text-amber-700 hover:text-amber-900 underline font-medium cursor-pointer">
+                                            create an account
+                                        </button>
+                                    </Link>
+                                </div>
+                                <span className="text-center">to search and filter products.</span>
                             </div>
                         </div>
                     </div>
                 )}
 
-                <div className="py-5 px-4 bg-white">
+                {/* Search and Filter Section - Mobile Responsive */}
+                <div className="py-4 sm:py-5 px-4 bg-white">
                     <div className="max-w-6xl mx-auto">
-                        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                            <div className="relative flex-1 max-w-md">
-                                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2" />
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
+                            {/* Search Input */}
+                            <div className="relative flex-1 max-w-full sm:max-w-md">
+                                <Search size={14} className="sm:w-4 sm:h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-600" />
                                 <input
                                     type="text"
                                     placeholder="Search products.."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     disabled={!isAuthenticated}
-                                    className="w-full pl-8 pr-3 py-2 border-2 border-amber-500 rounded-lg focus:border-amber-700 focus:outline-none text-amber-900 placeholder-gray-500 disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    className="w-full pl-8 sm:pl-8 pr-3 py-2 sm:py-2.5 border-2 border-amber-500 rounded-lg focus:border-amber-700 focus:outline-none text-amber-900 placeholder-gray-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base" 
                                 />
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <div className="relative">
+                            {/* Category Filter */}
+                            <div className="flex items-center justify-center sm:justify-end">
+                                <div className="relative w-full sm:w-auto">
                                     <select 
                                         value={selectedCategory}
                                         onChange={(e) => handleCategoryChange(e.target.value)}
                                         disabled={!isAuthenticated}
-                                        className="appearance-none border-2 border-amber-500 rounded-lg px-6 py-2 pr-10 text-gray-500 focus:border-amber-700 focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="appearance-none border-2 border-amber-500 rounded-lg px-4 sm:px-6 py-2 sm:py-2.5 pr-8 sm:pr-10 text-gray-500 focus:border-amber-700 focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto text-sm sm:text-base"
                                     >
                                         <option>All Products</option>
                                         <option>Face Care</option>
@@ -246,40 +258,42 @@ export default function Products() {
                                         <option>Hair Care</option>
                                         <option>Men's Collection</option>
                                     </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-amber-600 pointer-events-none" size={16} />
+                                    <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-amber-600 pointer-events-none w-4 h-4 sm:w-4 sm:h-4" />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Search Results Info */}
+                        {/* Search Results Info - Mobile Responsive */}
                         {isSearchActive && (
-                            <div className="mt-4">
+                            <div className="mt-3 sm:mt-4">
                                 {loading && (
                                     <div className="text-center text-amber-700">
-                                        <p>Searching products...</p>
+                                        <p className="text-sm sm:text-base">Searching products...</p>
                                     </div>
                                 )}
                                 
                                 {!loading && searchResults.length > 0 && (
                                     <div className="text-amber-700">
-                                        <p>Found {searchResults.length} product{searchResults.length !== 1 ? 's' : ''} 
-                                        {searchTerm && ` for "${searchTerm}"`}
-                                        {selectedCategory !== "All Products" && ` in "${selectedCategory}"`}</p>
+                                        <p className="text-sm sm:text-base">
+                                            Found {searchResults.length} product{searchResults.length !== 1 ? 's' : ''} 
+                                            {searchTerm && ` for "${searchTerm}"`}
+                                            {selectedCategory !== "All Products" && ` in "${selectedCategory}"`}
+                                        </p>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* Error Message */}
+                        {/* Error Message - Mobile Responsive */}
                         {error && (
-                            <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                            <div className="mt-3 sm:mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm sm:text-base">
                                 {error}
                             </div>
                         )}
 
-                        {/* Clear Search Button */}
+                        {/* Clear Search Button - Mobile Responsive */}
                         {(isSearchActive || searchTerm || selectedCategory !== "All Products") && (
-                            <div className="mt-4">
+                            <div className="mt-3 sm:mt-4">
                                 <button
                                     onClick={() => {
                                         setSearchTerm("");
@@ -288,7 +302,7 @@ export default function Products() {
                                         setSearchResults([]);
                                         setError("");
                                     }}
-                                    className="text-amber-600 hover:text-amber-800 underline text-sm"
+                                    className="text-amber-600 hover:text-amber-800 underline text-xs sm:text-sm transition-colors"
                                 >
                                     Clear search and show all products
                                 </button>
@@ -297,7 +311,9 @@ export default function Products() {
                     </div>
                 </div>
             </div>
-            <div className="border-t border-amber-100 mt-7 mb-5"></div>
+            
+            {/* Divider */}
+            <div className="border-t border-amber-100 mt-4 sm:mt-7 mb-3 sm:mb-5"></div>
 
             {/* Pass search results to ProductGrid if search is active, otherwise pass all products */}
             <ProductGrid 
