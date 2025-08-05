@@ -98,7 +98,7 @@ export default function Checkout() {
                         productId = item.productId;    // Direct productId field
                         console.log(`Using direct product ID for ${item.name}: ${productId}`);
                     } else {
-                        console.error('❌ NO PRODUCT ID FOUND for item:', item);
+                        console.error('NO PRODUCT ID FOUND for item:', item);
                         // Don't use item._id as fallback - it's wrong!
                     }
                     
@@ -115,7 +115,7 @@ export default function Checkout() {
                 }).filter(item => {
                     // VALIDATION: Filter out items without productId
                     if (!item.productId) {
-                        console.error('❌ Removing item without productId:', item.name);
+                        console.error('Removing item without productId:', item.name);
                         return false;
                     }
                     return true;

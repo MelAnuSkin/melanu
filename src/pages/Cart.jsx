@@ -65,7 +65,7 @@ export default function Cart() {
                 productId = item.productId;    // Direct productId field
                 console.log(`Using direct product ID for ${item.name}: ${productId}`);
             } else {
-                console.error('❌ NO PRODUCT ID FOUND for item:', item);
+                console.error('NO PRODUCT ID FOUND for item:', item);
                 // Don't use item._id as fallback - it's wrong!
             }
             
@@ -89,7 +89,7 @@ export default function Cart() {
         }).filter(item => {
             // Filter out items without productId
             if (!item.productId) {
-                console.error('❌ Removing item without productId:', item.name);
+                console.error(' Removing item without productId:', item.name);
                 return false;
             }
             return true;
@@ -141,11 +141,11 @@ export default function Cart() {
                 // Check what we should actually use as productId
                 console.log('Which field contains the actual product ID?');
                 if (firstItem.product && firstItem.product._id) {
-                    console.log('✅ Use item.product._id:', firstItem.product._id);
+                    console.log('Use item.product._id:', firstItem.product._id);
                 } else if (firstItem.productId) {
-                    console.log('✅ Use item.productId:', firstItem.productId);
+                    console.log(' Use item.productId:', firstItem.productId);
                 } else {
-                    console.log('❌ No clear product ID found - this is the problem!');
+                    console.log(' No clear product ID found - this is the problem!');
                     console.log('Available fields:', Object.keys(firstItem));
                 }
             }
@@ -348,7 +348,7 @@ export default function Cart() {
             }
             
         } catch (error) {
-            console.error('🔍 Error removing item:', error);
+            console.error(' Error removing item:', error);
             
            
             setCartItems(originalItems);
@@ -395,10 +395,10 @@ export default function Cart() {
         
         try {
             const token = localStorage.getItem('token');
-            console.log('🔍 Clearing entire cart...');
+            console.log('Clearing entire cart...');
             
             const response = await clearCart(token);
-            console.log('🔍 Clear cart response:', response);
+            console.log(' Clear cart response:', response);
             
             if (response.status === 200 || response.status === 201 || response.status === 204) {
                 setCartItems([]);
