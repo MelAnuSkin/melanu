@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import UserNav from "../components/UserNav";
-import { ArrowLeft, MapPin, User, Shield, Minus, Plus, CreditCard } from "lucide-react";
+import { ArrowLeft, MapPin, User, Shield, Minus, Plus, CheckCircle } from "lucide-react";
 import Footer from "../components/Footer";
 import { Link } from "react-router";
-import { getCartItems, initiatePayment, updateCartItem, createOrder } from '../api/client.js';
+import { getCartItems, updateCartItem, createOrder } from '../api/client.js';
 
 export default function Checkout() {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [processingPayment, setProcessingPayment] = useState(false);
+    const [processingOrder, setProcessingOrder] = useState(false);
     const [updating, setUpdating] = useState({});
     const [userId, setUserId] = useState(null);
     
@@ -232,10 +232,10 @@ export default function Checkout() {
     const shipping = 0; // Free shipping
     const total = subtotal + shipping;
 
-    // Handle payment process - FIXED WITH PROPER PRODUCT ID HANDLING
-    const handleMakePayment = async () => {
+    // Handle confirm order - Create order and navigate to order summary
+    const handleConfirmOrder = async () => {
         if (!Array.isArray(cartItems) || cartItems.length === 0) {
-            alert('Your cart is empty. Please add items before making payment.');
+            alert('Your cart is empty. Please add items before confirming order.');
             return;
         }
 
@@ -251,25 +251,10 @@ export default function Checkout() {
             return;
         }
 
-        setProcessingPayment(true);
+        setProcessingOrder(true);
 
         try {
             const token = localStorage.getItem('token');
-            
-            // Get user email from localStorage or decode from token
-            let userEmail = localStorage.getItem('userEmail');
-            
-            if (!userEmail) {
-                try {
-                    const tokenPayload = JSON.parse(atob(token.split('.')[1]));
-                    userEmail = tokenPayload.email;
-                } catch (e) {
-                    console.error('Could not decode email from token');
-                    alert('Unable to retrieve user email. Please try logging in again.');
-                    setProcessingPayment(false);
-                    return;
-                }
-            }
 
             console.log('Creating order with userId:', userId);
             console.log('Token payload debug:');
@@ -280,54 +265,40 @@ export default function Checkout() {
                 console.error('Could not decode token:', e);
             }
 
-            // STEP 1: Create the order - FIXED productId extraction
+            // STEP 1: Create order for FIRST item only (backend limitation)
+            const firstItem = cartItems[0]; // Only process first item
+            
+            console.log('Processing first cart item for order:', {
+                name: firstItem.name,
+                productId: firstItem.productId,
+                price: firstItem.price,
+                quantity: firstItem.quantity
+            });
+
+            // Simple order data to match current backend expectations
             const orderData = {
-                items: cartItems.map(item => {
-                    // FIXED: Only use productId, never _id for product identification
-                    const productId = item.productId;  // This should now be the actual product ID
-                    
-                    console.log(`Mapping item: ${item.name} -> productId: ${productId}, quantity: ${item.quantity}`);
-                    
-                    // Validate that we have a productId
-                    if (!productId) {
-                        console.error('Missing productId for item:', item);
-                        throw new Error(`Product ID missing for item: ${item.name}`);
-                    }
-                    
-                    return {
-                        productId: productId,
-                        quantity: item.quantity
-                    };
-                }),
+                quantity: firstItem.quantity,
                 shippingAddress: {
-                    street: formData.address,
+                    address: formData.address,
                     city: formData.city,
-                    country: "Ghana",
-                    phone: formData.phone
-                },
-                orderNotes: formData.orderNotes
+                    region: formData.region,
+                    phone: formData.phone,
+                    postalCode: ""
+                }
             };
 
             console.log('=== ORDER DATA DEBUG ===');
-            console.log('Complete order data:', JSON.stringify(orderData, null, 2));
-            console.log('Items being sent to backend:', orderData.items);
-            
-            // Validate all items have productIds before sending
-            const itemsWithoutProductId = orderData.items.filter(item => !item.productId);
-            if (itemsWithoutProductId.length > 0) {
-                console.error('Items missing productId:', itemsWithoutProductId);
-                throw new Error('Some items are missing product IDs. Please refresh and try again.');
-            }
-            
+            console.log('Order data being sent:', JSON.stringify(orderData, null, 2));
+            console.log('Product ID in URL:', firstItem.productId);
             console.log('=== END ORDER DATA DEBUG ===');
             
-            // Create order using the updated function that includes userId
-            const orderResponse = await createOrder(orderData, userId, token);
+            // Create order
+            const orderResponse = await createOrder(orderData, firstItem.productId, token);
             
             console.log('Order creation response:', orderResponse.data);
 
             // Extract the order ID from the response
-            const orderId = orderResponse.data._id || orderResponse.data.orderId || orderResponse.data.id;
+            const orderId = orderResponse.data.order._id || orderResponse.data.order.orderId || orderResponse.data.order.id;
             
             if (!orderId) {
                 throw new Error('Order ID not received from server');
@@ -335,28 +306,30 @@ export default function Checkout() {
 
             console.log('Order created successfully with ID:', orderId);
 
-            // STEP 2: Now initiate payment with the real order ID
-            console.log('Initiating payment with:', { email: userEmail, orderId });
-            
-            const paymentResponse = await initiatePayment(userEmail, orderId, token);
-            
-            console.log('Payment initiation response:', paymentResponse.data);
-
-            // Handle the payment response and redirect to Paystack
-            if (paymentResponse.data && paymentResponse.data.authorization_url) {
-                console.log('Redirecting to Paystack...');
-                window.location.href = paymentResponse.data.authorization_url;
-            } else if (paymentResponse.data && paymentResponse.data.paymentUrl) {
-                console.log('Redirecting to payment URL...');
-                window.location.href = paymentResponse.data.paymentUrl;
+            // Show success message for multiple items (since backend only processes one)
+            if (cartItems.length > 1) {
+                alert(`Order confirmed! Only "${firstItem.name}" was ordered. The current system processes one item at a time. You can create separate orders for other items.`);
             } else {
-                throw new Error('Payment authorization URL not received');
+                alert('Order confirmed successfully!');
             }
 
+            // Navigate to make payment page with order details
+            navigate('/makepayment', {
+                state: {
+                    orderDetails: {
+                        orderId,
+                        item: firstItem,
+                        shippingAddress: orderData.shippingAddress,
+                        orderNotes: formData.orderNotes,
+                        total: firstItem.price * firstItem.quantity
+                    }
+                }
+            });
+
         } catch (error) {
-            console.error('Error in payment process:', error);
+            console.error('Error in order creation:', error);
             
-            let errorMessage = 'Failed to process order. Please try again.';
+            let errorMessage = 'Failed to create order. Please try again.';
             
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
@@ -366,7 +339,7 @@ export default function Checkout() {
             
             alert(errorMessage);
         } finally {
-            setProcessingPayment(false);
+            setProcessingOrder(false);
         }
     };
 
@@ -400,7 +373,7 @@ export default function Checkout() {
                             </button>
                         </Link>
                         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-mono text-amber-800">Checkout</h1>
-                        <p className="text-amber-700 font-bold font-mono mt-1 text-sm sm:text-base">Complete your order securely</p>
+                        <p className="text-amber-700 font-bold font-mono mt-1 text-sm sm:text-base">Review and confirm your order</p>
                     </div>
                 </div>
 
@@ -423,17 +396,47 @@ export default function Checkout() {
                         </div>
                     ) : (
                         <div className="space-y-6 sm:space-y-8">
+                            {/* Warning for Multiple Items */}
+                            {cartItems.length > 1 && (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <div className="flex items-center">
+                                        <div className="text-yellow-600 mr-3">
+                                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div className="text-yellow-800">
+                                            <h3 className="font-medium">Multiple Items Notice</h3>
+                                            <p className="text-sm mt-1">Only the first item ("{cartItems[0].name}") will be processed in this order. Please create separate orders for other items.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Order Review Section with Quantity Controls - Mobile Responsive */}
                             <div className="bg-white rounded-lg shadow-sm border border-amber-500 p-4 sm:p-6">
                                 <h2 className="text-lg sm:text-xl font-semibold text-amber-800 mb-4 sm:mb-6">Review Your Order</h2>
                                 
                                 <div className="space-y-3 sm:space-y-4">
-                                    {cartItems.map((item) => {
+                                    {cartItems.map((item, index) => {
                                         const itemId = item.productId || item._id;
                                         const isUpdating = updating[itemId];
+                                        const isFirstItem = index === 0;
                                         
                                         return (
-                                            <div key={itemId} className={`border border-amber-200 rounded-lg p-3 sm:p-4 ${isUpdating ? 'opacity-50' : ''}`}>
+                                            <div key={itemId} className={`border rounded-lg p-3 sm:p-4 ${isFirstItem ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'} ${isUpdating ? 'opacity-50' : ''}`}>
+                                                {/* Item status indicator */}
+                                                {isFirstItem && (
+                                                    <div className="mb-2 text-xs text-green-600 font-medium">
+                                                        ✓ This item will be processed
+                                                    </div>
+                                                )}
+                                                {!isFirstItem && (
+                                                    <div className="mb-2 text-xs text-gray-500">
+                                                        ⚠ Create separate order for this item
+                                                    </div>
+                                                )}
+
                                                 {/* Mobile Layout: Vertical Stack */}
                                                 <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                                                     {/* Product Image and Info */}
@@ -513,20 +516,20 @@ export default function Checkout() {
                                     })}
                                 </div>
 
-                                {/* Order Totals - Mobile Responsive */}
+                                {/* Order Totals - Only for first item */}
                                 <div className="border-t border-amber-300 pt-4 mt-4 sm:mt-6">
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center text-sm sm:text-base">
-                                            <span className="text-amber-700">Subtotal:</span>
-                                            <span className="font-semibold text-amber-800">GH₵{subtotal.toFixed(2)}</span>
+                                            <span className="text-amber-700">Item Total ({cartItems[0].name}):</span>
+                                            <span className="font-semibold text-amber-800">GH₵{(cartItems[0].price * cartItems[0].quantity).toFixed(2)}</span>
                                         </div>
                                         <div className="flex justify-between items-center text-sm sm:text-base">
                                             <span className="text-amber-700">Shipping:</span>
                                             <span className="font-semibold text-green-600">FREE</span>
                                         </div>
                                         <div className="flex justify-between items-center text-base sm:text-lg font-bold">
-                                            <span className="text-amber-800">Total:</span>
-                                            <span className="text-amber-800">GH₵{total.toFixed(2)}</span>
+                                            <span className="text-amber-800">Order Total:</span>
+                                            <span className="text-amber-800">GH₵{(cartItems[0].price * cartItems[0].quantity).toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -617,33 +620,33 @@ export default function Checkout() {
                                 />
                             </div>
 
-                            {/* Make Payment Button - Mobile Responsive */}
+                            {/* Confirm Order Button - Mobile Responsive */}
                             <div className="bg-white rounded-lg shadow-sm border border-amber-500 p-4 sm:p-6">
                                 <div className="flex items-start text-xs sm:text-sm text-amber-600 mb-4 border border-amber-300 rounded-lg px-3 sm:px-4 py-3 bg-[#FDF8F0]">
-                                    <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5 sm:mt-0" />
-                                    <span>Your payment information is secure and encrypted with Paystack</span>
+                                    <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 mr-2 flex-shrink-0 mt-0.5 sm:mt-0" />
+                                    <span>Please review your order details carefully before confirming</span>
                                 </div>
 
                                 <button 
-                                    onClick={handleMakePayment}
-                                    disabled={processingPayment}
-                                    className="w-full bg-green-600 text-white cursor-pointer py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3"
+                                    onClick={handleConfirmOrder}
+                                    disabled={processingOrder}
+                                    className="w-full bg-amber-600 text-white cursor-pointer py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3"
                                 >
-                                    {processingPayment ? (
+                                    {processingOrder ? (
                                         <>
                                             <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-2 border-white border-t-transparent"></div>
-                                            <span className="text-sm sm:text-base">Processing Payment...</span>
+                                            <span className="text-sm sm:text-base">Creating Order...</span>
                                         </>
                                     ) : (
                                         <>
-                                            <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
-                                            <span className="text-sm sm:text-base">Make Payment - GH₵{total.toFixed(2)}</span>
+                                            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+                                            <span className="text-sm sm:text-base">Confirm Order - GH₵{(cartItems[0]?.price * cartItems[0]?.quantity).toFixed(2)}</span>
                                         </>
                                     )}
                                 </button>
 
                                 <p className="text-xs text-amber-500 text-center mt-3">
-                                    By placing your order, you agree to our Terms of Service and Privacy Policy
+                                    After confirming, you'll be taken to review your order and make payment
                                 </p>
                             </div>
                         </div>

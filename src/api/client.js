@@ -239,11 +239,13 @@ export const clearCart = async (token) => {
 
 // PAYMENT FUNCTIONS
 
-// Create Order function - you'll need to implement this endpoint
-export const createOrder = async (orderData, userId, token) => {
+// FIXED: Create Order function - Updated to match new backend route
+export const createOrder = async (orderData, productId, token) => {
     try {
-        console.log('Creating order:', orderData);
-        const response = await apiClient.post(`/api/orders/${userId}`, orderData, {
+        console.log('Creating order with productId in URL:', productId);
+        console.log('Order data being sent:', orderData);
+        // FIXED: Add productId to URL to match backend route /:productId
+        const response = await apiClient.post(`/api/orders/${productId}`, orderData, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
@@ -432,4 +434,4 @@ export const updateOrderStatus = async (orderId, status, token) => {
     }
 };
 
-export const imageBaseURL = import.meta.env.VITE_IMAGE_BASE_URL; 
+export const imageBaseURL = import.meta.env.VITE_IMAGE_BASE_URL;

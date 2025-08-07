@@ -14,6 +14,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import ConfirmPassword from "./pages/ConfirmPassword";
+import MakePayment from "./pages/MakePayment";
 import AdminRouteGuard from "./components/AdminRouteGuard";
 
 const melAnuRouter = createBrowserRouter([
@@ -30,6 +31,7 @@ const melAnuRouter = createBrowserRouter([
   { path: '/blog', element: <Blog /> },
   { path: '/forgot-password', element: <ForgotPassword /> },
   { path: '/confirm-password', element: <ConfirmPassword /> },
+  { path: '/makepayment', element: <MakePayment /> },
   { path: '/admin', element: (<AdminRouteGuard> <Admin /></AdminRouteGuard> )},
   { path: '/*', element: <NotFound /> },
 ]);
