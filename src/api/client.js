@@ -305,22 +305,38 @@ export const subscribeToNewsletter = async (email, token) => {
 
 // Search products by category
 export const searchProductsByCategory = async (category, token) => {
-    const response = await apiClient.get(`/api/products/search?category=${encodeURIComponent(category)}`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-    return response;
+    try {
+        console.log('Searching by category:', category);
+        const response = await apiClient.get(`/api/products/search?category=${encodeURIComponent(category)}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Category search response:', response);
+        return response;
+    } catch (error) {
+        console.error('Category search error:', error.response?.data || error.message);
+        throw error;
+    }
 };
 
 // Search products by name
 export const searchProductsByName = async (name, token) => {
-    const response = await apiClient.get(`/api/products/search?name=${encodeURIComponent(name)}`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-    return response;
+    try {
+        console.log('Searching by name:', name);
+        const response = await apiClient.get(`/api/products/search?name=${encodeURIComponent(name)}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Name search response:', response);
+        return response;
+    } catch (error) {
+        console.error('Name search error:', error.response?.data || error.message);
+        throw error;
+    }
 };
 
 // Combined search function (can search by either name or category)
@@ -402,34 +418,85 @@ export const replyToMessage = async (messageId, replyMessage, token) => {
     }
 };
 
+// ENHANCED ORDERS FUNCTIONS - Updated with detailed logging and better error handling
+
 export const getAllOrders = async (token) => {
     try {
+        console.log('API: Fetching all orders...');
+        console.log('API: Token exists:', !!token);
+        
         const response = await apiClient.get('/api/orders', {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
         });
+        
+        console.log('API: Get all orders response status:', response.status);
+        console.log('API: Orders data:', response.data);
+        console.log('API: Number of orders:', response.data?.length);
+        
+        // Log first order structure for debugging
+        if (response.data && response.data.length > 0) {
+            console.log('API: First order structure:', response.data[0]);
+            console.log('API: First order user:', response.data[0].user);
+            console.log('API: First order items:', response.data[0].items);
+            console.log('API: First order status:', response.data[0].orderStatus || response.data[0].status);
+        }
+        
         return response;
     } catch (error) {
-        console.error('Error fetching orders:', error);
+        console.error('API: Error fetching orders:', error);
+        console.error('API: Error response status:', error.response?.status);
+        console.error('API: Error response data:', error.response?.data);
+        
+        if (error.response?.status === 401) {
+            console.error('API: Authentication failed - token may be invalid');
+        } else if (error.response?.status === 403) {
+            console.error('API: Access forbidden - user may not have admin rights');
+        }
+        
         throw error;
     }
 };
 
 export const updateOrderStatus = async (orderId, status, token) => {
     try {
-        const response = await apiClient.put(`/api/orders/${orderId}/status`, {
-            status
-        }, {
+        console.log('API: Updating order status...');
+        console.log('API: Order ID:', orderId);
+        console.log('API: New status:', status);
+        console.log('API: Token exists:', !!token);
+        
+        const requestData = { status };
+        console.log('API: Request data:', requestData);
+        
+        const response = await apiClient.put(`/api/orders/${orderId}/status`, requestData, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
         });
+        
+        console.log('API: Update order status response:', response);
+        console.log('API: Response status:', response.status);
+        console.log('API: Response data:', response.data);
+        
         return response;
     } catch (error) {
-        console.error('Error updating order status:', error);
+        console.error('API: Error updating order status:', error);
+        console.error('API: Error response status:', error.response?.status);
+        console.error('API: Error response data:', error.response?.data);
+        console.error('API: Request URL:', error.config?.url);
+        console.error('API: Request data:', error.config?.data);
+        
+        if (error.response?.status === 401) {
+            console.error('API: Authentication failed - token may be invalid');
+        } else if (error.response?.status === 404) {
+            console.error('API: Order not found - order ID may be incorrect');
+        } else if (error.response?.status === 403) {
+            console.error('API: Access forbidden - user may not have admin rights');
+        }
+        
         throw error;
     }
 };

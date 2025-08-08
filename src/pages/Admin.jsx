@@ -314,6 +314,45 @@ export default function Admin() {
   const [formData, setFormData] = useState({
     name: '', price: '', stock: '', category: '', description: '', image: null});
 
+     const getOrderDisplayData = (order) => {
+    return {
+      id: order._id || order.id,
+      orderNumber: order.orderNumber || `#${(order._id || order.id)?.slice(-6)?.toUpperCase()}`,
+      customer: {
+        name: `${order.user?.firstName || 'Unknown'} ${order.user?.lastName || 'User'}`,
+        email: order.user?.email || 'No email provided'
+      },
+      items: order.items || [],
+      total: order.totalAmount || order.total || 0,
+      status: order.orderStatus || order.status || 'pending',
+      paymentStatus: order.paymentStatus || 'pending',
+      createdAt: order.createdAt,
+      shippingAddress: order.shippingAddress || {},
+      paymentMethod: order.paymentMethod || 'Not specified'
+    };
+  };
+
+  const getStatusBadgeClass = (status) => {
+    const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";
+    
+    switch (status?.toLowerCase()) {
+      case 'pending':
+        return `${baseClasses} bg-yellow-100 text-yellow-800`;
+      case 'confirmed':
+        return `${baseClasses} bg-blue-100 text-blue-800`;
+      case 'processing':
+        return `${baseClasses} bg-purple-100 text-purple-800`;
+      case 'shipped':
+        return `${baseClasses} bg-indigo-100 text-indigo-800`;
+      case 'delivered':
+        return `${baseClasses} bg-green-100 text-green-800`;
+      case 'cancelled':
+        return `${baseClasses} bg-red-100 text-red-800`;
+      default:
+        return `${baseClasses} bg-gray-100 text-gray-800`;
+    }
+  };
+
   useEffect(() => {
     const fetchProducts = async () => {
       if (!isAuthenticated) return;
@@ -375,49 +414,110 @@ export default function Admin() {
   }, [adminToken, isAuthenticated]);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      if (!isAuthenticated) return;
-      
-      try {
-        setOrdersLoading(true);
-        const token = localStorage.getItem('token');
-        const response = await getAllOrders(token);
-        setOrders(response.data || []);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-        setOrdersError(error.message || 'Failed to fetch orders');
-      } finally {
-        setOrdersLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, [isAuthenticated]);
-
-  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+  const fetchOrders = async () => {
+    if (!isAuthenticated) return;
+    
     try {
-      setUpdatingOrderId(orderId);
-      const token = localStorage.getItem('token');
+      setOrdersLoading(true);
       
-      await updateOrderStatus(orderId, newStatus, token);
+      // Get token - handle the admin-token case like you do for products
+      let token = localStorage.getItem('token');
       
-      // Update local state
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
-          (order._id || order.id) === orderId 
-            ? { ...order, status: newStatus }
-            : order
-        )
-      );
+      if (token === 'admin-token') {
+        try {
+          console.log('Admin: Getting real JWT token...');
+          const adminCredentials = {
+            email: localStorage.getItem('userEmail'),
+            password: 'admin123'  // Your admin password
+          };
+          
+          const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
+          token = loginResponse.data.token;
+          localStorage.setItem('token', token);
+          console.log('Admin: Got real JWT token successfully');
+        } catch (error) {
+          console.error('Admin: Failed to get JWT token:', error);
+          setOrdersError('Failed to authenticate admin. Please login again.');
+          setOrdersLoading(false);
+          return;
+        }
+      }
       
-      alert(`Order status updated to ${newStatus}!`);
+      console.log('Admin: Fetching orders with valid token...');
+      const response = await getAllOrders(token);
+      setOrders(response.data || []);
+      setOrdersError(null);
+      console.log('Admin: Orders loaded successfully:', response.data);
+      
     } catch (error) {
-      console.error('Error updating order status:', error);
-      alert(`Failed to update order status: ${error.response?.data?.message || error.message}`);
+      console.error('Admin: Error fetching orders:', error);
+      if (error.response?.status === 401) {
+        setOrdersError('Authentication failed. Please login again.');
+        // Try to get a fresh token
+        localStorage.removeItem('token');
+      } else {
+        setOrdersError(error.response?.data?.message || 'Failed to fetch orders');
+      }
     } finally {
-      setUpdatingOrderId(null);
+      setOrdersLoading(false);
     }
   };
+
+  fetchOrders();
+}, [isAuthenticated]);
+
+
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+  try {
+    console.log('Admin: Updating order status:', { orderId, newStatus });
+    setUpdatingOrderId(orderId);
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      alert('Authentication required. Please login again.');
+      navigate('/login');
+      return;
+    }
+    
+    const response = await updateOrderStatus(orderId, newStatus, token);
+    console.log('Admin: Update order status response:', response);
+    
+    // Update local state - handle both property names
+    setOrders(prevOrders => 
+      prevOrders.map(order => {
+        const orderIdToMatch = order._id || order.id;
+        if (orderIdToMatch === orderId) {
+          return { 
+            ...order, 
+            orderStatus: newStatus,  // Backend uses 'orderStatus'
+            status: newStatus        // Keep both for compatibility
+          };
+        }
+        return order;
+      })
+    );
+    
+    alert(`Order status updated to ${newStatus} successfully!`);
+  } catch (error) {
+    console.error('Admin: Error updating order status:', error);
+    
+    let errorMessage = 'Failed to update order status';
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.status === 401) {
+      errorMessage = 'Authentication failed. Please login again.';
+      setTimeout(() => navigate('/login'), 2000);
+    } else if (error.response?.status === 404) {
+      errorMessage = 'Order not found';
+    } else if (error.response?.status === 403) {
+      errorMessage = 'Access denied. Admin privileges required.';
+    }
+    
+    alert(`${errorMessage}`);
+  } finally {
+    setUpdatingOrderId(null);
+  }
+};
 
   const handleReply = (message) => {
     setSelectedMessage(message);
