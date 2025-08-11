@@ -489,8 +489,8 @@ export default function Admin() {
         if (orderIdToMatch === orderId) {
           return { 
             ...order, 
-            orderStatus: newStatus,  // Backend uses 'orderStatus'
-            status: newStatus        // Keep both for compatibility
+            orderStatus: newStatus,  
+            status: newStatus        
           };
         }
         return order;

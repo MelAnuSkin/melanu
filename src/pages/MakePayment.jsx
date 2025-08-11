@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router';
 import UserNav from "../components/UserNav";
-import { ArrowLeft, CheckCircle, MapPin, Package, CreditCard, Shield } from "lucide-react";
+import { ArrowLeft, CheckCircle, MapPin, Package, CreditCard, Shield, AlertTriangle } from "lucide-react";
 import Footer from "../components/Footer";
 import { Link } from "react-router";
 import { initiatePayment } from '../api/client.js';
@@ -56,6 +56,11 @@ export default function MakePayment() {
         }
     }, [location.state, navigate, orderId]);
 
+    // Check if this is a multiple orders scenario
+    const isMultipleOrders = orderDetails?.isMultipleOrders || (orderDetails?.orders && Array.isArray(orderDetails.orders));
+    const orders = isMultipleOrders ? orderDetails.orders : (orderDetails ? [orderDetails] : []);
+    const totalAmount = orderDetails?.totalAmount || orderDetails?.total || 0;
+
     // Handle payment initiation
     const handleMakePayment = async () => {
         if (!orderDetails) {
@@ -83,13 +88,18 @@ export default function MakePayment() {
                 }
             }
 
+            // For multiple orders, use the first order ID or a combined approach
+            const paymentOrderId = isMultipleOrders ? orders[0].orderId : orderDetails.orderId;
+
             console.log('Initiating payment with:', { 
                 email: userEmail, 
-                orderId: orderDetails.orderId 
+                orderId: paymentOrderId,
+                isMultiple: isMultipleOrders,
+                totalOrders: orders.length
             });
             
             // Initiate payment with Paystack
-            const paymentResponse = await initiatePayment(userEmail, orderDetails.orderId, token);
+            const paymentResponse = await initiatePayment(userEmail, paymentOrderId, token);
             
             console.log('Payment initiation response:', paymentResponse.data);
 
@@ -155,59 +165,115 @@ export default function MakePayment() {
                         </Link>
                         <div className="flex items-center mb-2">
                             <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mr-3" />
-                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-mono text-amber-800">Order Confirmed!</h1>
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-mono text-amber-800">
+                                Order{isMultipleOrders ? 's' : ''} Confirmed!
+                            </h1>
                         </div>
-                        <p className="text-amber-700 font-bold font-mono mt-1 text-sm sm:text-base">Review your order and proceed to payment</p>
-                        <p className="text-amber-600 text-xs sm:text-sm mt-1">Order ID: {orderDetails.orderId}</p>
+                        <p className="text-amber-700 font-bold font-mono mt-1 text-sm sm:text-base">
+                            Review your order{isMultipleOrders ? 's' : ''} and proceed to payment
+                        </p>
+                        {isMultipleOrders ? (
+                            <p className="text-amber-600 text-xs sm:text-sm mt-1">
+                                {orders.length} orders created successfully
+                            </p>
+                        ) : (
+                            <p className="text-amber-600 text-xs sm:text-sm mt-1">
+                                Order ID: {orderDetails.orderId}
+                            </p>
+                        )}
                     </div>
                 </div>
 
                 <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
                     <div className="space-y-6 sm:space-y-8">
+                        {/* Failed Orders Warning (if any) */}
+                        {orderDetails.hasFailedOrders && (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <div className="flex items-center">
+                                    <AlertTriangle className="w-5 h-5 text-yellow-600 mr-3" />
+                                    <div className="text-yellow-800">
+                                        <h3 className="font-medium">Partial Success</h3>
+                                        <p className="text-sm mt-1">
+                                            Some items couldn't be processed: {orderDetails.failedItems?.join(', ')}. 
+                                            You can retry those items later from your cart.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Order Summary Card */}
                         <div className="bg-white rounded-lg shadow-sm border border-amber-500 p-4 sm:p-6">
                             <div className="flex items-center mb-4 sm:mb-6">
                                 <Package className="w-5 h-5 text-amber-600 mr-2" />
-                                <h2 className="text-lg sm:text-xl font-semibold text-amber-800">Order Summary</h2>
+                                <h2 className="text-lg sm:text-xl font-semibold text-amber-800">
+                                    Order Summary ({orders.length} item{orders.length > 1 ? 's' : ''})
+                                </h2>
                             </div>
 
-                            {/* Product Details */}
-                            <div className="border border-amber-200 rounded-lg p-4 mb-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
-                                    {/* Product Image */}
-                                    <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 mx-auto sm:mx-0">
-                                        <img
-                                            src={orderDetails.item.image || 'https://via.placeholder.com/80x80?text=Product'}
-                                            alt={orderDetails.item.name}
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => {
-                                                e.target.src = 'https://via.placeholder.com/80x80?text=Product';
-                                            }}
-                                        />
-                                    </div>
+                            {/* Product Details - All Orders */}
+                            <div className="space-y-4">
+                                {orders.map((order, index) => {
+                                    const item = order.item;
+                                    const orderTotal = order.total;
+                                    
+                                    return (
+                                        <div key={order.orderId || index} className="border border-amber-200 rounded-lg p-4">
+                                            {/* Order Header for multiple orders */}
+                                            {isMultipleOrders && (
+                                                <div className="mb-3 pb-2 border-b border-gray-200">
+                                                    <p className="text-xs text-amber-600 font-medium">
+                                                        Order {index + 1} - ID: {order.orderId}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            
+                                            <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                                                {/* Product Image */}
+                                                <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 mx-auto sm:mx-0">
+                                                    <img
+                                                        src={item?.image || 'https://via.placeholder.com/80x80?text=Product'}
+                                                        alt={item?.name || 'Product'}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.target.src = 'https://via.placeholder.com/80x80?text=Product';
+                                                        }}
+                                                    />
+                                                </div>
 
-                                    {/* Product Info */}
-                                    <div className="flex-1 text-center sm:text-left">
-                                        <h3 className="font-medium text-amber-800 text-base sm:text-lg mb-1">{orderDetails.item.name}</h3>
-                                        <p className="text-amber-600 text-sm sm:text-base mb-2">GH₵{orderDetails.item.price.toFixed(2)} each</p>
-                                        <p className="text-amber-700 text-sm">Quantity: {orderDetails.item.quantity}</p>
-                                    </div>
+                                                {/* Product Info */}
+                                                <div className="flex-1 text-center sm:text-left">
+                                                    <h3 className="font-medium text-amber-800 text-base sm:text-lg mb-1">
+                                                        {item?.name || 'Unknown Product'}
+                                                    </h3>
+                                                    <p className="text-amber-600 text-sm sm:text-base mb-2">
+                                                        GH₵{(item?.price || 0).toFixed(2)} each
+                                                    </p>
+                                                    <p className="text-amber-700 text-sm">
+                                                        Quantity: {item?.quantity || 1}
+                                                    </p>
+                                                </div>
 
-                                    {/* Total Price */}
-                                    <div className="text-center sm:text-right">
-                                        <div className="font-bold text-lg sm:text-xl text-amber-700">
-                                            GH₵{orderDetails.total.toFixed(2)}
+                                                {/* Total Price */}
+                                                <div className="text-center sm:text-right">
+                                                    <div className="font-bold text-lg sm:text-xl text-amber-700">
+                                                        GH₵{orderTotal.toFixed(2)}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
+                                    );
+                                })}
                             </div>
 
                             {/* Order Totals */}
-                            <div className="border-t border-amber-300 pt-4">
+                            <div className="border-t border-amber-300 pt-4 mt-4">
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center text-sm sm:text-base">
-                                        <span className="text-amber-700">Subtotal:</span>
-                                        <span className="font-semibold text-amber-800">GH₵{orderDetails.total.toFixed(2)}</span>
+                                        <span className="text-amber-700">
+                                            Subtotal ({orders.length} item{orders.length > 1 ? 's' : ''}):
+                                        </span>
+                                        <span className="font-semibold text-amber-800">GH₵{totalAmount.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm sm:text-base">
                                         <span className="text-amber-700">Shipping:</span>
@@ -215,7 +281,7 @@ export default function MakePayment() {
                                     </div>
                                     <div className="flex justify-between items-center text-base sm:text-lg font-bold border-t border-amber-200 pt-2">
                                         <span className="text-amber-800">Total Amount:</span>
-                                        <span className="text-amber-800">GH₵{orderDetails.total.toFixed(2)}</span>
+                                        <span className="text-amber-800">GH₵{totalAmount.toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -232,19 +298,27 @@ export default function MakePayment() {
                                 <div className="space-y-2 text-sm sm:text-base">
                                     <div>
                                         <span className="font-medium text-amber-800">Address:</span>
-                                        <span className="ml-2 text-amber-700">{orderDetails.shippingAddress.address}</span>
+                                        <span className="ml-2 text-amber-700">
+                                            {orderDetails.shippingAddress?.address || 'Not provided'}
+                                        </span>
                                     </div>
                                     <div>
                                         <span className="font-medium text-amber-800">City:</span>
-                                        <span className="ml-2 text-amber-700">{orderDetails.shippingAddress.city}</span>
+                                        <span className="ml-2 text-amber-700">
+                                            {orderDetails.shippingAddress?.city || 'Not provided'}
+                                        </span>
                                     </div>
                                     <div>
                                         <span className="font-medium text-amber-800">Region:</span>
-                                        <span className="ml-2 text-amber-700">{orderDetails.shippingAddress.region}</span>
+                                        <span className="ml-2 text-amber-700">
+                                            {orderDetails.shippingAddress?.region || 'Not provided'}
+                                        </span>
                                     </div>
                                     <div>
                                         <span className="font-medium text-amber-800">Phone:</span>
-                                        <span className="ml-2 text-amber-700">{orderDetails.shippingAddress.phone}</span>
+                                        <span className="ml-2 text-amber-700">
+                                            {orderDetails.shippingAddress?.phone || 'Not provided'}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -264,7 +338,14 @@ export default function MakePayment() {
                         <div className="bg-white rounded-lg shadow-sm border border-amber-500 p-4 sm:p-6">
                             <div className="text-center mb-6">
                                 <h2 className="text-lg sm:text-xl font-semibold text-amber-800 mb-2">Ready to Pay?</h2>
-                                <p className="text-amber-600 text-sm sm:text-base">Complete your purchase securely with Paystack</p>
+                                <p className="text-amber-600 text-sm sm:text-base">
+                                    Complete your purchase securely with Paystack
+                                    {isMultipleOrders && (
+                                        <span className="block mt-1 text-xs">
+                                            Note: Payment covers all {orders.length} orders
+                                        </span>
+                                    )}
+                                </p>
                             </div>
 
                             {/* Security Info */}
@@ -287,7 +368,7 @@ export default function MakePayment() {
                                 ) : (
                                     <>
                                         <CreditCard className="w-6 h-6" />
-                                        <span>Make Payment - GH₵{orderDetails.total.toFixed(2)}</span>
+                                        <span>Make Payment - GH₵{totalAmount.toFixed(2)}</span>
                                     </>
                                 )}
                             </button>
@@ -304,8 +385,13 @@ export default function MakePayment() {
                                 <div className="text-sm text-blue-700 space-y-1">
                                     <p>• Complete payment securely through Paystack</p>
                                     <p>• Receive order confirmation via email</p>
-                                    <p>• Your order will be processed and shipped</p>
+                                    <p>• Your order{isMultipleOrders ? 's' : ''} will be processed and shipped</p>
                                     <p>• Track your order status in your account</p>
+                                    {isMultipleOrders && (
+                                        <p className="text-xs mt-2 font-medium">
+                                            All {orders.length} orders will be processed after payment
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>

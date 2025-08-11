@@ -86,26 +86,24 @@ export default function Checkout() {
                     cartData = cartData.cart.items;
                 }
                 
-                // Transform cart data to ensure consistent structure - FIXED VERSION
+                // Transform cart data to ensure consistent structure
                 const transformedItems = Array.isArray(cartData) ? cartData.map(item => {
-                    // CORRECTED: Based on typical cart API responses, try these in order:
                     let productId = null;
                     
                     if (item.product && item.product._id) {
-                        productId = item.product._id;  // Nested product object
+                        productId = item.product._id;
                         console.log(`Using nested product ID for ${item.name}: ${productId}`);
                     } else if (item.productId) {
-                        productId = item.productId;    // Direct productId field
+                        productId = item.productId;
                         console.log(`Using direct product ID for ${item.name}: ${productId}`);
                     } else {
                         console.error('NO PRODUCT ID FOUND for item:', item);
-                        // Don't use item._id as fallback - it's wrong!
                     }
                     
                     return {
-                        productId: productId,          // Only use actual product ID
-                        cartItemId: item._id,          // Cart item ID for reference
-                        _id: item._id,                 // Keep for compatibility
+                        productId: productId,
+                        cartItemId: item._id,
+                        _id: item._id,
                         name: item.name || item.productName || item.product?.name || 'Unknown Product',
                         price: parseFloat(item.price || item.productPrice || item.product?.price || 0),
                         quantity: parseInt(item.quantity || 1),
@@ -113,7 +111,6 @@ export default function Checkout() {
                         category: item.category || item.product?.category
                     };
                 }).filter(item => {
-                    // VALIDATION: Filter out items without productId
                     if (!item.productId) {
                         console.error('Removing item without productId:', item.name);
                         return false;
@@ -170,19 +167,6 @@ export default function Checkout() {
         try {
             const token = localStorage.getItem('token');
             
-            // DEBUG: Log current cart structure
-            console.log('=== CART DEBUG ===');
-            console.log('Cart items array:', cartItems);
-            cartItems.forEach((item, index) => {
-                console.log(`Item ${index}:`, {
-                    name: item.name,
-                    productId: item.productId,
-                    _id: item._id,
-                    id: item.id,
-                    fullItem: item
-                });
-            });
-            console.log('=== END CART DEBUG ===');
             console.log('Updating cart item quantity:', { productId, newQuantity });
             
             const response = await updateCartItem(productId, newQuantity, token);
@@ -227,12 +211,40 @@ export default function Checkout() {
         }
     };
 
-    // Calculate totals - ensure cartItems is always an array
+    // Calculate totals for all items
     const subtotal = Array.isArray(cartItems) ? cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0;
     const shipping = 0; // Free shipping
     const total = subtotal + shipping;
 
-    // Handle confirm order - Create order and navigate to order summary
+    // Helper function to create order for a single item
+    const createSingleOrder = async (item, token, shippingData) => {
+        const orderData = {
+            quantity: item.quantity,
+            shippingAddress: shippingData
+        };
+
+        console.log(`Creating order for item: ${item.name}`, {
+            productId: item.productId,
+            orderData
+        });
+
+        const orderResponse = await createOrder(orderData, item.productId, token);
+        
+        const orderId = orderResponse.data.order._id || orderResponse.data.order.orderId || orderResponse.data.order.id;
+        
+        if (!orderId) {
+            throw new Error(`Order ID not received for ${item.name}`);
+        }
+
+        return {
+            orderId,
+            item,
+            total: item.price * item.quantity,
+            response: orderResponse.data
+        };
+    };
+
+    // Handle confirm order - Create orders for all items
     const handleConfirmOrder = async () => {
         if (!Array.isArray(cartItems) || cartItems.length === 0) {
             alert('Your cart is empty. Please add items before confirming order.');
@@ -256,80 +268,93 @@ export default function Checkout() {
         try {
             const token = localStorage.getItem('token');
 
-            console.log('Creating order with userId:', userId);
-            console.log('Token payload debug:');
-            try {
-                const tokenPayload = JSON.parse(atob(token.split('.')[1]));
-                console.log('Full token payload:', tokenPayload);
-            } catch (e) {
-                console.error('Could not decode token:', e);
-            }
+            console.log('Creating orders for all items with userId:', userId);
 
-            // STEP 1: Create order for FIRST item only (backend limitation)
-            const firstItem = cartItems[0]; // Only process first item
-            
-            console.log('Processing first cart item for order:', {
-                name: firstItem.name,
-                productId: firstItem.productId,
-                price: firstItem.price,
-                quantity: firstItem.quantity
-            });
-
-            // Simple order data to match current backend expectations
-            const orderData = {
-                quantity: firstItem.quantity,
-                shippingAddress: {
-                    address: formData.address,
-                    city: formData.city,
-                    region: formData.region,
-                    phone: formData.phone,
-                    postalCode: ""
-                }
+            // Prepare shipping address
+            const shippingAddress = {
+                address: formData.address,
+                city: formData.city,
+                region: formData.region,
+                phone: formData.phone,
+                postalCode: ""
             };
 
-            console.log('=== ORDER DATA DEBUG ===');
-            console.log('Order data being sent:', JSON.stringify(orderData, null, 2));
-            console.log('Product ID in URL:', firstItem.productId);
-            console.log('=== END ORDER DATA DEBUG ===');
-            
-            // Create order
-            const orderResponse = await createOrder(orderData, firstItem.productId, token);
-            
-            console.log('Order creation response:', orderResponse.data);
+            // Create orders for all items
+            const orderPromises = cartItems.map(item => 
+                createSingleOrder(item, token, shippingAddress)
+            );
 
-            // Extract the order ID from the response
-            const orderId = orderResponse.data.order._id || orderResponse.data.order.orderId || orderResponse.data.order.id;
-            
-            if (!orderId) {
-                throw new Error('Order ID not received from server');
-            }
+            console.log(`Processing ${cartItems.length} orders...`);
 
-            console.log('Order created successfully with ID:', orderId);
+            // Execute all orders
+            const orderResults = await Promise.allSettled(orderPromises);
 
-            // Show success message for multiple items (since backend only processes one)
-            if (cartItems.length > 1) {
-                alert(`Order confirmed! Only "${firstItem.name}" was ordered. The current system processes one item at a time. You can create separate orders for other items.`);
-            } else {
-                alert('Order confirmed successfully!');
-            }
+            // Check results
+            const successfulOrders = [];
+            const failedOrders = [];
 
-            // Navigate to make payment page with order details
-            navigate('/makepayment', {
-                state: {
-                    orderDetails: {
-                        orderId,
-                        item: firstItem,
-                        shippingAddress: orderData.shippingAddress,
-                        orderNotes: formData.orderNotes,
-                        total: firstItem.price * firstItem.quantity
-                    }
+            orderResults.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                    successfulOrders.push(result.value);
+                    console.log(`Order ${index + 1} successful:`, result.value.orderId);
+                } else {
+                    failedOrders.push({
+                        item: cartItems[index],
+                        error: result.reason
+                    });
+                    console.error(`Order ${index + 1} failed:`, result.reason);
                 }
             });
 
+            // Handle results
+            if (successfulOrders.length === cartItems.length) {
+                // All orders successful
+                alert(`All ${successfulOrders.length} orders created successfully!`);
+                
+                // Navigate to payment page with all order details
+                navigate('/makepayment', {
+                    state: {
+                        orderDetails: {
+                            orders: successfulOrders,
+                            shippingAddress,
+                            orderNotes: formData.orderNotes,
+                            totalAmount: total,
+                            isMultipleOrders: true
+                        }
+                    }
+                });
+
+            } else if (successfulOrders.length > 0) {
+                // Some orders successful
+                const successItems = successfulOrders.map(order => order.item.name).join(', ');
+                const failedItems = failedOrders.map(failed => failed.item.name).join(', ');
+                
+                alert(`${successfulOrders.length} of ${cartItems.length} orders created successfully.\n\nSuccessful: ${successItems}\n\nFailed: ${failedItems}\n\nYou can proceed with the successful orders and retry the failed ones later.`);
+                
+                // Navigate with successful orders only
+                navigate('/makepayment', {
+                    state: {
+                        orderDetails: {
+                            orders: successfulOrders,
+                            shippingAddress,
+                            orderNotes: formData.orderNotes,
+                            totalAmount: successfulOrders.reduce((sum, order) => sum + order.total, 0),
+                            isMultipleOrders: true,
+                            hasFailedOrders: true,
+                            failedItems: failedOrders.map(f => f.item.name)
+                        }
+                    }
+                });
+
+            } else {
+                // All orders failed
+                throw new Error('All orders failed to create. Please try again.');
+            }
+
         } catch (error) {
-            console.error('Error in order creation:', error);
+            console.error('Error in order creation process:', error);
             
-            let errorMessage = 'Failed to create order. Please try again.';
+            let errorMessage = 'Failed to create orders. Please try again.';
             
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
@@ -396,18 +421,16 @@ export default function Checkout() {
                         </div>
                     ) : (
                         <div className="space-y-6 sm:space-y-8">
-                            {/* Warning for Multiple Items */}
+                            {/* Success Notice for Multiple Items */}
                             {cartItems.length > 1 && (
-                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                                     <div className="flex items-center">
-                                        <div className="text-yellow-600 mr-3">
-                                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path>
-                                            </svg>
+                                        <div className="text-green-600 mr-3">
+                                            <CheckCircle className="w-5 h-5" />
                                         </div>
-                                        <div className="text-yellow-800">
-                                            <h3 className="font-medium">Multiple Items Notice</h3>
-                                            <p className="text-sm mt-1">Only the first item ("{cartItems[0].name}") will be processed in this order. Please create separate orders for other items.</p>
+                                        <div className="text-green-800">
+                                            <h3 className="font-medium">Multiple Items Order</h3>
+                                            <p className="text-sm mt-1">All {cartItems.length} items in your cart will be processed as separate orders with the same shipping information.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -421,21 +444,13 @@ export default function Checkout() {
                                     {cartItems.map((item, index) => {
                                         const itemId = item.productId || item._id;
                                         const isUpdating = updating[itemId];
-                                        const isFirstItem = index === 0;
                                         
                                         return (
-                                            <div key={itemId} className={`border rounded-lg p-3 sm:p-4 ${isFirstItem ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'} ${isUpdating ? 'opacity-50' : ''}`}>
+                                            <div key={itemId} className={`border rounded-lg p-3 sm:p-4 border-green-200 bg-green-50 ${isUpdating ? 'opacity-50' : ''}`}>
                                                 {/* Item status indicator */}
-                                                {isFirstItem && (
-                                                    <div className="mb-2 text-xs text-green-600 font-medium">
-                                                        ✓ This item will be processed
-                                                    </div>
-                                                )}
-                                                {!isFirstItem && (
-                                                    <div className="mb-2 text-xs text-gray-500">
-                                                        ⚠ Create separate order for this item
-                                                    </div>
-                                                )}
+                                                <div className="mb-2 text-xs text-green-600 font-medium">
+                                                    ✓ Item {index + 1} - Will be processed
+                                                </div>
 
                                                 {/* Mobile Layout: Vertical Stack */}
                                                 <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
@@ -516,20 +531,20 @@ export default function Checkout() {
                                     })}
                                 </div>
 
-                                {/* Order Totals - Only for first item */}
+                                {/* Order Totals - All items */}
                                 <div className="border-t border-amber-300 pt-4 mt-4 sm:mt-6">
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center text-sm sm:text-base">
-                                            <span className="text-amber-700">Item Total ({cartItems[0].name}):</span>
-                                            <span className="font-semibold text-amber-800">GH₵{(cartItems[0].price * cartItems[0].quantity).toFixed(2)}</span>
+                                            <span className="text-amber-700">Subtotal ({cartItems.length} item{cartItems.length > 1 ? 's' : ''}):</span>
+                                            <span className="font-semibold text-amber-800">GH₵{subtotal.toFixed(2)}</span>
                                         </div>
                                         <div className="flex justify-between items-center text-sm sm:text-base">
                                             <span className="text-amber-700">Shipping:</span>
                                             <span className="font-semibold text-green-600">FREE</span>
                                         </div>
                                         <div className="flex justify-between items-center text-base sm:text-lg font-bold">
-                                            <span className="text-amber-800">Order Total:</span>
-                                            <span className="text-amber-800">GH₵{(cartItems[0].price * cartItems[0].quantity).toFixed(2)}</span>
+                                            <span className="text-amber-800">Total Amount:</span>
+                                            <span className="text-amber-800">GH₵{total.toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -624,7 +639,7 @@ export default function Checkout() {
                             <div className="bg-white rounded-lg shadow-sm border border-amber-500 p-4 sm:p-6">
                                 <div className="flex items-start text-xs sm:text-sm text-amber-600 mb-4 border border-amber-300 rounded-lg px-3 sm:px-4 py-3 bg-[#FDF8F0]">
                                     <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 mr-2 flex-shrink-0 mt-0.5 sm:mt-0" />
-                                    <span>Please review your order details carefully before confirming</span>
+                                    <span>All items will be processed as separate orders. Please review your order details carefully before confirming.</span>
                                 </div>
 
                                 <button 
@@ -635,18 +650,18 @@ export default function Checkout() {
                                     {processingOrder ? (
                                         <>
                                             <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-2 border-white border-t-transparent"></div>
-                                            <span className="text-sm sm:text-base">Creating Order...</span>
+                                            <span className="text-sm sm:text-base">Processing {cartItems.length} Order{cartItems.length > 1 ? 's' : ''}...</span>
                                         </>
                                     ) : (
                                         <>
                                             <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
-                                            <span className="text-sm sm:text-base">Confirm Order - GH₵{(cartItems[0]?.price * cartItems[0]?.quantity).toFixed(2)}</span>
+                                            <span className="text-sm sm:text-base">Confirm {cartItems.length} Order{cartItems.length > 1 ? 's' : ''} - GH₵{total.toFixed(2)}</span>
                                         </>
                                     )}
                                 </button>
 
                                 <p className="text-xs text-amber-500 text-center mt-3">
-                                    After confirming, you'll be taken to review your order and make payment
+                                    After confirming, you'll be taken to review your order{cartItems.length > 1 ? 's' : ''} and make payment
                                 </p>
                             </div>
                         </div>
