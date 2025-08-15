@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Upload, X, LogOut, Mail, Reply } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, X, LogOut, Package, ShoppingCart, Users, Mail, Reply } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { addProduct, deleteProduct, getAllProducts, updateProduct, getAllOrders, updateOrderStatus, replyToMessage } from '../api/client.js';
-import { apiClient, getAllContactMessages } from '../api/client.js';
+import { apiClient, getAllContactMessages, deleteContactMessage, getUserVisits } from '../api/client.js';
 import Header from '../components/Header.jsx';
 import Navigation from '../components/Navigation.jsx';
 
@@ -125,22 +125,22 @@ const ReplyModal = ({ message, isOpen, onClose, onSend, isLoading }) => {
   );
 };
 
-const ProductForm = ({ 
-  isEdit = false, 
-  formData, 
-  handleInputChange, 
-  handleImageUpload, 
-  handleSubmit, 
-  closeForm, 
-  isLoading, 
-  editingProduct 
+const ProductForm = ({
+  isEdit = false,
+  formData,
+  handleInputChange,
+  handleImageUpload,
+  handleSubmit,
+  closeForm,
+  isLoading,
+  editingProduct
 }) => (
   <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">
         {isEdit ? 'Edit Product' : 'Add New Product'}
       </h2>
-      
+
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -216,8 +216,8 @@ const ProductForm = ({
           </label>
           {isEdit && editingProduct && (
             <div className="mb-4 relative">
-              <img 
-                src={editingProduct.imageUrl || editingProduct.image || 'https://via.placeholder.com/80x80?text=Current'} 
+              <img
+                src={editingProduct.imageUrl || editingProduct.image || 'https://via.placeholder.com/80x80?text=Current'}
                 alt={editingProduct.name}
                 className="w-20 h-20 object-cover rounded-lg border"
                 onError={(e) => {
@@ -304,7 +304,9 @@ export default function Admin() {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [replyLoading, setReplyLoading] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState(null);
-  
+  const [userVisits, setUserVisits] = useState(0);
+  const [visitsLoading, setVisitsLoading] = useState(true);
+
   // Order states
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
@@ -312,9 +314,10 @@ export default function Admin() {
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
   const [formData, setFormData] = useState({
-    name: '', price: '', stock: '', category: '', description: '', image: null});
+    name: '', price: '', stock: '', category: '', description: '', image: null
+  });
 
-     const getOrderDisplayData = (order) => {
+  const getOrderDisplayData = (order) => {
     return {
       id: order._id || order.id,
       orderNumber: order.orderNumber || `#${(order._id || order.id)?.slice(-6)?.toUpperCase()}`,
@@ -334,7 +337,7 @@ export default function Admin() {
 
   const getStatusBadgeClass = (status) => {
     const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";
-    
+
     switch (status?.toLowerCase()) {
       case 'pending':
         return `${baseClasses} bg-yellow-100 text-yellow-800`;
@@ -356,7 +359,7 @@ export default function Admin() {
   useEffect(() => {
     const fetchProducts = async () => {
       if (!isAuthenticated) return;
-      
+
       try {
         const response = await getAllProducts();
         const productsData = response.data;
@@ -414,110 +417,151 @@ export default function Admin() {
   }, [adminToken, isAuthenticated]);
 
   useEffect(() => {
-  const fetchOrders = async () => {
-    if (!isAuthenticated) return;
-    
-    try {
-      setOrdersLoading(true);
-      
-      // Get token - handle the admin-token case like you do for products
-      let token = localStorage.getItem('token');
-      
-      if (token === 'admin-token') {
-        try {
-          console.log('Admin: Getting real JWT token...');
-          const adminCredentials = {
-            email: localStorage.getItem('userEmail'),
-            password: 'admin123'  // Your admin password
-          };
-          
-          const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
-          token = loginResponse.data.token;
-          localStorage.setItem('token', token);
-          console.log('Admin: Got real JWT token successfully');
-        } catch (error) {
-          console.error('Admin: Failed to get JWT token:', error);
-          setOrdersError('Failed to authenticate admin. Please login again.');
-          setOrdersLoading(false);
-          return;
-        }
-      }
-      
-      console.log('Admin: Fetching orders with valid token...');
-      const response = await getAllOrders(token);
-      setOrders(response.data || []);
-      setOrdersError(null);
-      console.log('Admin: Orders loaded successfully:', response.data);
-      
-    } catch (error) {
-      console.error('Admin: Error fetching orders:', error);
-      if (error.response?.status === 401) {
-        setOrdersError('Authentication failed. Please login again.');
-        // Try to get a fresh token
-        localStorage.removeItem('token');
-      } else {
-        setOrdersError(error.response?.data?.message || 'Failed to fetch orders');
-      }
-    } finally {
-      setOrdersLoading(false);
-    }
-  };
+    const fetchOrders = async () => {
+      if (!isAuthenticated) return;
 
-  fetchOrders();
-}, [isAuthenticated]);
+      try {
+        setOrdersLoading(true);
+
+        // Get token - handle the admin-token case like you do for products
+        let token = localStorage.getItem('token');
+
+        if (token === 'admin-token') {
+          try {
+            console.log('Admin: Getting real JWT token...');
+            const adminCredentials = {
+              email: localStorage.getItem('userEmail'),
+              password: 'admin123'  // Your admin password
+            };
+
+            const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
+            token = loginResponse.data.token;
+            localStorage.setItem('token', token);
+            console.log('Admin: Got real JWT token successfully');
+          } catch (error) {
+            console.error('Admin: Failed to get JWT token:', error);
+            setOrdersError('Failed to authenticate admin. Please login again.');
+            setOrdersLoading(false);
+            return;
+          }
+        }
+
+        console.log('Admin: Fetching orders with valid token...');
+        const response = await getAllOrders(token);
+        setOrders(response.data || []);
+        setOrdersError(null);
+        console.log('Admin: Orders loaded successfully:', response.data);
+
+      } catch (error) {
+        console.error('Admin: Error fetching orders:', error);
+        if (error.response?.status === 401) {
+          setOrdersError('Authentication failed. Please login again.');
+          // Try to get a fresh token
+          localStorage.removeItem('token');
+        } else {
+          setOrdersError(error.response?.data?.message || 'Failed to fetch orders');
+        }
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    const fetchUserVisits = async () => {
+      if (!isAuthenticated) return;
+
+      try {
+        setVisitsLoading(true);
+        let token = localStorage.getItem('token');
+
+        // Handle admin token like in other functions
+        if (token === 'admin-token') {
+          try {
+            const adminCredentials = {
+              email: localStorage.getItem('userEmail'),
+              password: 'admin123'
+            };
+
+            const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
+            token = loginResponse.data.token;
+            localStorage.setItem('token', token);
+          } catch (error) {
+            console.error('Failed to get JWT token for visits:', error);
+            setVisitsLoading(false);
+            return;
+          }
+        }
+
+        const response = await getUserVisits(token);
+        const visitsCount = response.data.count || 0;
+        setUserVisits(visitsCount);
+        console.log('User visits loaded:', response.data);
+
+      } catch (error) {
+        console.error('Error fetching user visits:', error);
+      } finally {
+        setVisitsLoading(false);
+      }
+    };
+
+    fetchUserVisits();
+  }, [isAuthenticated]);
 
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
-  try {
-    console.log('Admin: Updating order status:', { orderId, newStatus });
-    setUpdatingOrderId(orderId);
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-      alert('Authentication required. Please login again.');
-      navigate('/login');
-      return;
+    try {
+      console.log('Admin: Updating order status:', { orderId, newStatus });
+      setUpdatingOrderId(orderId);
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        alert('Authentication required. Please login again.');
+        navigate('/login');
+        return;
+      }
+
+      const response = await updateOrderStatus(orderId, newStatus, token);
+      console.log('Admin: Update order status response:', response);
+
+      // Update local state - handle both property names
+      setOrders(prevOrders =>
+        prevOrders.map(order => {
+          const orderIdToMatch = order._id || order.id;
+          if (orderIdToMatch === orderId) {
+            return {
+              ...order,
+              orderStatus: newStatus,
+              status: newStatus
+            };
+          }
+          return order;
+        })
+      );
+
+      alert(`Order status updated to ${newStatus} successfully!`);
+    } catch (error) {
+      console.error('Admin: Error updating order status:', error);
+
+      let errorMessage = 'Failed to update order status';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Authentication failed. Please login again.';
+        setTimeout(() => navigate('/login'), 2000);
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Order not found';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Access denied. Admin privileges required.';
+      }
+
+      alert(`${errorMessage}`);
+    } finally {
+      setUpdatingOrderId(null);
     }
-    
-    const response = await updateOrderStatus(orderId, newStatus, token);
-    console.log('Admin: Update order status response:', response);
-    
-    // Update local state - handle both property names
-    setOrders(prevOrders => 
-      prevOrders.map(order => {
-        const orderIdToMatch = order._id || order.id;
-        if (orderIdToMatch === orderId) {
-          return { 
-            ...order, 
-            orderStatus: newStatus,  
-            status: newStatus        
-          };
-        }
-        return order;
-      })
-    );
-    
-    alert(`Order status updated to ${newStatus} successfully!`);
-  } catch (error) {
-    console.error('Admin: Error updating order status:', error);
-    
-    let errorMessage = 'Failed to update order status';
-    if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
-    } else if (error.response?.status === 401) {
-      errorMessage = 'Authentication failed. Please login again.';
-      setTimeout(() => navigate('/login'), 2000);
-    } else if (error.response?.status === 404) {
-      errorMessage = 'Order not found';
-    } else if (error.response?.status === 403) {
-      errorMessage = 'Access denied. Admin privileges required.';
-    }
-    
-    alert(`${errorMessage}`);
-  } finally {
-    setUpdatingOrderId(null);
-  }
-};
+  };
 
   const handleReply = (message) => {
     setSelectedMessage(message);
@@ -528,59 +572,56 @@ export default function Admin() {
     try {
       setReplyLoading(true);
       console.log('Sending reply with full replyData object:', replyData);
-      
+
       // Extract the reply message from replyData
       // The ReplyModal sends: { to, subject, message, originalMessage }
       const replyMessage = replyData.message;
       const messageId = replyData.originalMessage._id;
-      
+
       console.log('Extracted data:', {
         messageId: messageId,
         replyMessage: replyMessage,
         replyLength: replyMessage?.length
       });
-      
+
       // Validate that we have a reply message
       if (!replyMessage || !replyMessage.trim()) {
         alert('Please enter a reply message before sending.');
         setReplyLoading(false);
         return;
       }
-      
+
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         alert('Authentication required. Please login again.');
         navigate('/login');
         return;
       }
-      
+
       console.log('About to call API with:', {
         messageId: messageId,
         replyMessage: replyMessage.trim(),
         tokenExists: !!token
       });
-      
+
       // Call the actual API to send the reply
       const response = await replyToMessage(
-        messageId, 
-        replyMessage.trim(), 
+        messageId,
+        replyMessage.trim(),
         token
       );
-      
+
       console.log('Reply API response:', response);
-      
+
       if (response.status === 200 || response.status === 201) {
         alert('Reply sent successfully!');
         setShowReplyModal(false);
         setSelectedMessage(null);
-        
-        // Optionally refresh messages to show updated status
-        // You might want to add a "replied" status or remove the message from the list
       } else {
         throw new Error(`Unexpected response status: ${response.status}`);
       }
-      
+
     } catch (error) {
       console.error('Error sending reply:', error);
       console.error('Full error details:', {
@@ -589,9 +630,9 @@ export default function Admin() {
         status: error.response?.status,
         config: error.config
       });
-      
+
       let errorMessage = 'Failed to send reply. Please try again.';
-      
+
       if (error.response?.data?.message) {
         errorMessage = `Failed to send reply: ${error.response.data.message}`;
       } else if (error.response?.status === 401) {
@@ -608,7 +649,7 @@ export default function Admin() {
       } else if (error.message) {
         errorMessage = `Failed to send reply: ${error.message}`;
       }
-      
+
       alert(errorMessage);
     } finally {
       setReplyLoading(false);
@@ -619,20 +660,49 @@ export default function Admin() {
     if (window.confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
       try {
         setDeletingMessageId(messageId);
-        
-        console.log('Deleting message:', messageId);
-        
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Remove message from local state
-        setMessages(prevMessages => prevMessages.filter(msg => msg._id !== messageId));
-        
-        alert('Message deleted successfully!');
-        
+
+        let token = localStorage.getItem('token');
+
+        // Handle admin token authentication
+        if (token === 'admin-token') {
+          try {
+            const adminCredentials = {
+              email: localStorage.getItem('userEmail'),
+              password: 'admin123'
+            };
+
+            const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
+            token = loginResponse.data.token;
+            localStorage.setItem('token', token);
+          } catch (error) {
+            console.error('Failed to get JWT token:', error);
+            alert('Failed to authenticate admin. Please login again.');
+            setDeletingMessageId(null);
+            return;
+          }
+        }
+
+        // Call the actual API to delete the message
+        const response = await deleteContactMessage(messageId, token);
+
+        if (response.status === 200 || response.status === 204) {
+          // Remove message from local state
+          setMessages(prevMessages => prevMessages.filter(msg => msg._id !== messageId));
+          alert('Message deleted successfully!');
+        }
+
       } catch (error) {
         console.error('Error deleting message:', error);
-        alert('Failed to delete message. Please try again.');
+
+        let errorMessage = 'Failed to delete message. Please try again.';
+        if (error.response?.status === 401) {
+          errorMessage = 'Authentication failed. Please login again.';
+          setTimeout(() => navigate('/login'), 1000);
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+
+        alert(errorMessage);
       } finally {
         setDeletingMessageId(null);
       }
@@ -645,9 +715,9 @@ export default function Admin() {
       localStorage.removeItem('userRole');
       localStorage.removeItem('userEmail');
       localStorage.removeItem('isAuthenticated');
-      
+
       console.log('Admin logged out');
-      navigate('/'); 
+      navigate('/');
     }
   };
 
@@ -689,7 +759,7 @@ export default function Admin() {
       stock: product.stock.toString(),
       category: product.category,
       description: product.description || '',
-      image: null 
+      image: null
     });
     setShowEditForm(true);
   };
@@ -712,18 +782,18 @@ export default function Admin() {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         setIsLoading(true);
-        
-        console.log('Attempting to delete product with ID:', productId); 
-        
+
+        console.log('Attempting to delete product with ID:', productId);
+
         let token = localStorage.getItem('token');
-        
+
         if (token === 'admin-token') {
           try {
             const adminCredentials = {
               email: localStorage.getItem('userEmail'),
               password: 'admin123'
             };
-            
+
             const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
             token = loginResponse.data.token;
             localStorage.setItem('token', token);
@@ -736,7 +806,7 @@ export default function Admin() {
         }
 
         const response = await deleteProduct(productId, token);
-        
+
         if (response.status === 200) {
           const refreshResponse = await getAllProducts();
           setProducts(refreshResponse.data);
@@ -744,8 +814,8 @@ export default function Admin() {
         }
       } catch (error) {
         console.error('Error deleting product:', error);
-        console.error('Error response:', error.response?.data); 
-        
+        console.error('Error response:', error.response?.data);
+
         if (error.response?.status === 401) {
           alert('Authentication failed. Please login again.');
           navigate('/login');
@@ -764,21 +834,21 @@ export default function Admin() {
     if (showEditForm) {
       try {
         setIsLoading(true);
-        
-        console.log('Attempting to update product with ID:', editingProduct._id || editingProduct.id); 
-        
+
+        console.log('Attempting to update product with ID:', editingProduct._id || editingProduct.id);
+
         let token = localStorage.getItem('token');
-        
+
         if (token === 'admin-token') {
           try {
             const adminCredentials = {
               email: localStorage.getItem('userEmail'),
-              password: 'admin123' 
+              password: 'admin123'
             };
-            
+
             const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
             token = loginResponse.data.token;
-            localStorage.setItem('token', token); 
+            localStorage.setItem('token', token);
           } catch (error) {
             console.error('Failed to get admin token:', error);
             alert('Failed to authenticate admin. Please login again.');
@@ -789,18 +859,18 @@ export default function Admin() {
 
         const productId = editingProduct._id || editingProduct.id;
         const response = await updateProduct(productId, formData, token);
-        
+
         if (response.status === 200) {
           alert('Product updated successfully!');
           closeForm();
-          
+
           const refreshResponse = await getAllProducts();
           setProducts(refreshResponse.data);
         }
       } catch (error) {
         console.error('Error updating product:', error);
-        console.error('Error response:', error.response?.data); 
-        
+        console.error('Error response:', error.response?.data);
+
         if (error.response?.status === 401) {
           alert('Authentication failed. Please login again.');
           navigate('/login');
@@ -815,19 +885,19 @@ export default function Admin() {
     } else {
       try {
         setIsLoading(true);
-        
+
         let token = localStorage.getItem('token');
-        
+
         if (token === 'admin-token') {
           try {
             const adminCredentials = {
               email: localStorage.getItem('userEmail'),
               password: 'admin123'
             };
-            
+
             const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
             token = loginResponse.data.token;
-            localStorage.setItem('token', token); 
+            localStorage.setItem('token', token);
           } catch (error) {
             console.error('Failed to get admin token:', error);
             alert('Failed to authenticate admin. Please login again.');
@@ -837,11 +907,11 @@ export default function Admin() {
         }
 
         const response = await addProduct(formData, token);
-        
+
         if (response.status === 201) {
           alert('Product added successfully!');
           closeForm();
-          
+
           const refreshResponse = await getAllProducts();
           setProducts(refreshResponse.data);
         }
@@ -870,21 +940,73 @@ export default function Admin() {
     );
   }
 
+  const StatsCard = ({ title, value, isLoading, icon }) => (
+    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">{title}</h3>
+          <p className="text-2xl font-bold text-gray-900 mt-2">
+            {isLoading ? (
+              <div className="animate-pulse bg-gray-200 h-6 w-16 rounded"></div>
+            ) : (
+              value.toLocaleString()
+            )}
+          </p>
+        </div>
+        {icon && (
+          <div className="text-blue-500">
+            {icon}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <Header handleLogout={handleLogout} />
 
+        {/* Stats Overview - Add this section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <StatsCard
+              title="Total Products"
+              value={products.length}
+              isLoading={false}
+              icon={<Package size={24} />}
+            />
+            <StatsCard
+              title="Total Orders"
+              value={orders.length}
+              isLoading={ordersLoading}
+              icon={<ShoppingCart size={24} />}
+            />
+            <StatsCard
+              title="Messages"
+              value={messages.length}
+              isLoading={loading}
+              icon={<Mail size={24} />}
+            />
+            <StatsCard
+              title="User Visits"
+              value={userVisits}
+              isLoading={visitsLoading}
+              icon={<Users size={24} />}
+            />
+          </div>
+        </div>
+
         {/* Navigation Component with all props */}
-        <Navigation 
+        <Navigation
           // Product-related props
           products={products}
           onAddProduct={openAddForm}
           onEditProduct={openEditForm}
           onDeleteProduct={handleDelete}
           isLoading={isLoading}
-          
+
           // Message-related props
           messages={messages}
           onReplyMessage={handleReply}
@@ -899,6 +1021,9 @@ export default function Admin() {
           updatingOrderId={updatingOrderId}
           ordersLoading={ordersLoading}
           ordersError={ordersError}
+
+          userVisits={userVisits}
+          visitsLoading={visitsLoading}
         />
 
         {/* Product Forms */}

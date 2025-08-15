@@ -397,7 +397,7 @@ export const replyToMessage = async (messageId, replyMessage, token) => {
         console.log('Making request to:', `${apiClient.defaults.baseURL}/api/contact/reply/${messageId}`);
         
         const requestData = {
-            replyMessage: replyMessage.trim() // Changed from "replyMessasge" to "replyMessage"
+            replyMessage: replyMessage.trim() 
         };
         
         console.log('Request data:', requestData);
@@ -414,6 +414,40 @@ export const replyToMessage = async (messageId, replyMessage, token) => {
         console.error('Error in replyToMessage:', error);
         console.error('Error response:', error.response?.data);
         console.error('Error status:', error.response?.status);
+        throw error;
+    }
+};
+        // Delete Contact Message function
+export const deleteContactMessage = async (messageId, token) => {
+    try {
+        console.log('Deleting contact message:', messageId);
+        const response = await apiClient.delete(`/api/contact/delete/${messageId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Delete message response:', response);
+        return response;
+    } catch (error) {
+        console.error('Error in deleteContactMessage:', error.response?.data || error.message);
+        throw error;
+    }
+};
+
+export const getUserVisits = async (token) => {
+    try {
+        console.log('Getting user visits data');
+        const response = await apiClient.get('/api/views/count', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('User visits response:', response);
+        return response;
+    } catch (error) {
+        console.error('Error in getUserVisits:', error.response?.data || error.message);
         throw error;
     }
 };
@@ -462,17 +496,39 @@ export const getAllOrders = async (token) => {
 
 export const updateOrderStatus = async (orderId, status, token) => {
     try {
+        console.log('=== UPDATE ORDER STATUS DEBUG ===');
         console.log('API: Updating order status...');
         console.log('API: Order ID:', orderId);
         console.log('API: New status:', status);
         console.log('API: Token exists:', !!token);
         
+        // Handle admin token like other functions
+        let validToken = token;
+        if (token === 'admin-token') {
+            try {
+                const adminCredentials = {
+                    email: localStorage.getItem('userEmail'),
+                    password: 'admin123'
+                };
+                
+                const loginResponse = await apiClient.post('/api/auth/login', adminCredentials);
+                validToken = loginResponse.data.token;
+                localStorage.setItem('token', validToken);
+                console.log('API: Got real JWT token for order update');
+            } catch (error) {
+                console.error('API: Failed to get JWT token:', error);
+                throw new Error('Failed to authenticate admin');
+            }
+        }
+        
         const requestData = { status };
-        console.log('API: Request data:', requestData);
+        console.log('API: Request data being sent:', requestData);
+        console.log('API: Request URL:', `${apiClient.defaults.baseURL}/api/orders/${orderId}/status`);
+        console.log('API: Using token:', validToken ? 'Valid token exists' : 'No token');
         
         const response = await apiClient.put(`/api/orders/${orderId}/status`, requestData, {
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${validToken}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -480,22 +536,17 @@ export const updateOrderStatus = async (orderId, status, token) => {
         console.log('API: Update order status response:', response);
         console.log('API: Response status:', response.status);
         console.log('API: Response data:', response.data);
+        console.log('=== END DEBUG ===');
         
         return response;
     } catch (error) {
+        console.error('=== UPDATE ORDER ERROR ===');
         console.error('API: Error updating order status:', error);
         console.error('API: Error response status:', error.response?.status);
         console.error('API: Error response data:', error.response?.data);
         console.error('API: Request URL:', error.config?.url);
         console.error('API: Request data:', error.config?.data);
-        
-        if (error.response?.status === 401) {
-            console.error('API: Authentication failed - token may be invalid');
-        } else if (error.response?.status === 404) {
-            console.error('API: Order not found - order ID may be incorrect');
-        } else if (error.response?.status === 403) {
-            console.error('API: Access forbidden - user may not have admin rights');
-        }
+        console.error('=== END ERROR DEBUG ===');
         
         throw error;
     }
