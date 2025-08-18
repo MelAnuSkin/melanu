@@ -1,9 +1,10 @@
-import { ShoppingCart, Eye, LogOut } from "lucide-react";
+import { ShoppingCart, Eye, LogOut} from "lucide-react";
 import UserNav from "../components/UserNav";
 import { Link, useNavigate } from "react-router";
 import Footer from "../components/Footer";
 import { useState, useEffect } from "react";
 import { apiClient } from "../api/client.js";
+import { ListOrdered } from "lucide-react";
 
 export default function UserPage() {
     const [user, setUser] = useState(null);
@@ -113,6 +114,15 @@ export default function UserPage() {
                                             View Cart
                                         </button>
                                     </Link>
+
+
+                                    <Link to="/vieworders">
+                                        <button className="w-full bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 cursor-pointer rounded-xl font-medium transition-colors duration-200 flex items-center justify-center gap-3 mb-3">
+                                            <ListOrdered size={20} />
+                                            Orders
+                                        </button>
+                                    </Link>
+                                    
 
                                     <button 
                                         onClick={handleLogout}

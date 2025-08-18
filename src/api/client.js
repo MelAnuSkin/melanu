@@ -552,4 +552,33 @@ export const updateOrderStatus = async (orderId, status, token) => {
     }
 };
 
+
+export const getUserOrders = async (token) => {
+    try {
+        console.log('Getting user orders...');
+        console.log('Token exists:', !!token);
+        
+        const response = await apiClient.get('/api/orders/my', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('Get user orders response:', response);
+        console.log('Orders data:', response.data);
+        return response;
+    } catch (error) {
+        console.error('Error in getUserOrders:', error);
+        console.error('Error response:', error.response?.data);
+        console.error('Error status:', error.response?.status);
+        
+        if (error.response?.status === 401) {
+            console.error('Authentication failed - token may be invalid');
+        }
+        
+        throw error;
+    }
+};
+
 export const imageBaseURL = import.meta.env.VITE_IMAGE_BASE_URL;
