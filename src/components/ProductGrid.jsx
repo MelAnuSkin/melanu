@@ -497,13 +497,6 @@ export default function ProductGrid({ onCartUpdate }) {
 
                                     {/* Button Container */}
                                     <div className="flex flex-col gap-2">
-                                        <button 
-                                            onClick={() => handleBuyNow(product)}
-                                            className="bg-green-600 hover:bg-green-700 text-white cursor-pointer px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 font-medium"
-                                        >
-                                            <Zap size={16} />
-                                            Buy Now
-                                        </button>
                                         
                                         <button 
                                             onClick={() => handleAddToCart(product)}
