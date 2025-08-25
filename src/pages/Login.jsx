@@ -5,76 +5,6 @@ import { Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { apiClient } from "../api/client.js";
 
-// Performance Debugger
-const PerformanceDebugger = {
-    timers: new Map(),
-    
-    start: (label) => {
-        console.time(label);
-        PerformanceDebugger.timers.set(label, performance.now());
-    },
-    
-    end: (label) => {
-        console.timeEnd(label);
-        const startTime = PerformanceDebugger.timers.get(label);
-        if (startTime) {
-            const duration = performance.now() - startTime;
-            console.log(`⏱️ ${label}: ${duration.toFixed(2)}ms`);
-            
-            // Alert for slow operations
-            if (duration > 3000) {
-                console.warn(`🐌 Slow operation detected: ${label} took ${duration.toFixed(2)}ms`);
-            }
-            
-            PerformanceDebugger.timers.delete(label);
-        }
-    },
-    
-    measureApiCall: async (label, apiCall) => {
-        PerformanceDebugger.start(label);
-        try {
-            const result = await apiCall();
-            PerformanceDebugger.end(label);
-            return result;
-        } catch (error) {
-            PerformanceDebugger.end(label);
-            throw error;
-        }
-    }
-};
-
-// Connection Monitor
-const ConnectionMonitor = {
-    checkSpeed: async () => {
-        const start = performance.now();
-        try {
-            // Make a small test request to check speed
-            const response = await fetch(window.location.origin, { 
-                method: 'HEAD',
-                headers: { 'Cache-Control': 'no-cache' }
-            });
-            const end = performance.now();
-            const duration = end - start;
-            
-            // Categorize connection speed
-            if (duration < 100) return 'fast';
-            if (duration < 500) return 'medium';
-            return 'slow';
-        } catch {
-            return 'slow'; // Default to slow if test fails
-        }
-    },
-
-    getTimeouts: (speed) => {
-        switch (speed) {
-            case 'fast': return { login: 5000, data: 8000 };
-            case 'medium': return { login: 10000, data: 15000 };
-            case 'slow': return { login: 20000, data: 30000 };
-            default: return { login: 15000, data: 20000 };
-        }
-    }
-};
-
 // Transition Loading Component
 const TransitionLoading = ({ message }) => (
     <div className="fixed inset-0 bg-white bg-opacity-95 flex items-center justify-center z-50">
@@ -111,22 +41,11 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [showTransition, setShowTransition] = useState(false);
-    const [connectionSpeed, setConnectionSpeed] = useState('medium');
     const navigate = useNavigate();
 
     // Admin credentials
     const ADMIN_EMAIL = "c39744736@gmail.com";
     const ADMIN_PASSWORD = "admin123";
-
-    // Check connection speed on component mount
-    useEffect(() => {
-        const checkConnection = async () => {
-            const speed = await ConnectionMonitor.checkSpeed();
-            setConnectionSpeed(speed);
-            console.log(`Connection speed detected: ${speed}`);
-        };
-        checkConnection();
-    }, []);
 
     const isAdminCredentials = (email, password) => {
         return email === ADMIN_EMAIL && password === ADMIN_PASSWORD;
@@ -138,47 +57,18 @@ export default function Login() {
         setError("");
 
         try {
-            PerformanceDebugger.start('Total Login Process');
-            
-            // Check connection speed and adjust timeouts
-            const timeouts = ConnectionMonitor.getTimeouts(connectionSpeed);
-            console.log(`Using timeouts for ${connectionSpeed} connection:`, timeouts);
-            
-            // Show warning for slow connections
-            if (connectionSpeed === 'slow') {
-                setError("Slow connection detected. Login may take longer than usual...");
-                setTimeout(() => setError(""), 3000);
-            }
-
-            // Add timeout wrapper for all API calls
-            const loginWithTimeout = (promise) => {
-                return Promise.race([
-                    promise,
-                    new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('Login timeout - please check your connection')), timeouts.login)
-                    )
-                ]);
-            };
-
             // Check if admin credentials are being used
             if (isAdminCredentials(email, password)) {
                 console.log("Admin login detected - authenticating...");
                 
                 try {
-                    // Get real JWT token for admin immediately
-                    const adminResponse = await PerformanceDebugger.measureApiCall(
-                        'Admin JWT Request',
-                        () => loginWithTimeout(
-                            apiClient.post('/api/auth/login', { 
-                                email: ADMIN_EMAIL, 
-                                password: ADMIN_PASSWORD 
-                            })
-                        )
-                    );
+                    // Get real JWT token for admin
+                    const adminResponse = await apiClient.post('/api/auth/login', { 
+                        email: ADMIN_EMAIL, 
+                        password: ADMIN_PASSWORD 
+                    });
                     
                     console.log("Admin JWT token obtained:", adminResponse.data);
-                    
-                    PerformanceDebugger.start('Admin LocalStorage Operations');
                     
                     // Store admin session data with real token
                     const adminData = {
@@ -189,26 +79,16 @@ export default function Login() {
                         loginTime: new Date().toISOString()
                     };
                     
-                    // Use batch localStorage operations
+                    // Batch localStorage operations
                     Object.entries(adminData).forEach(([key, value]) => {
                         localStorage.setItem(key, value);
                     });
                     
-                    PerformanceDebugger.end('Admin LocalStorage Operations');
-                    
                     console.log("Admin authentication complete - redirecting...");
                     
-                    // Show transition loading
-                    setShowTransition(true);
+                    // Navigate immediately
                     setLoading(false);
-                    
-                    PerformanceDebugger.start('Admin Navigation');
-                    setTimeout(() => {
-                        navigate('/admin');
-                        PerformanceDebugger.end('Admin Navigation');
-                        PerformanceDebugger.end('Total Login Process');
-                    }, 500);
-                    
+                    navigate('/admin');
                     return;
                     
                 } catch (adminError) {
@@ -216,8 +96,6 @@ export default function Login() {
                     
                     // Fallback to placeholder token if API fails
                     console.log("Using fallback admin authentication...");
-                    
-                    PerformanceDebugger.start('Admin Fallback LocalStorage');
                     
                     const fallbackData = {
                         token: 'admin-token',
@@ -232,32 +110,17 @@ export default function Login() {
                         localStorage.setItem(key, value);
                     });
                     
-                    PerformanceDebugger.end('Admin Fallback LocalStorage');
-                    
-                    // Show transition loading
-                    setShowTransition(true);
+                    // Navigate immediately
                     setLoading(false);
-                    
-                    setTimeout(() => {
-                        navigate('/admin');
-                        PerformanceDebugger.end('Total Login Process');
-                    }, 500);
-                    
+                    navigate('/admin');
                     return;
                 }
             }
 
             // Regular user login via API
-            const response = await PerformanceDebugger.measureApiCall(
-                'User Login Request',
-                () => loginWithTimeout(
-                    apiClient.post('/api/auth/login', { email, password })
-                )
-            );
+            const response = await apiClient.post('/api/auth/login', { email, password });
             
             console.log("User login successful:", response.data);
-            
-            PerformanceDebugger.start('User LocalStorage Operations');
             
             // Store regular user session data
             const userData = {
@@ -272,21 +135,11 @@ export default function Login() {
                 localStorage.setItem(key, value);
             });
             
-            PerformanceDebugger.end('User LocalStorage Operations');
-            
-            // Show transition loading
-            setShowTransition(true);
+            // Navigate immediately
             setLoading(false);
-            
-            PerformanceDebugger.start('User Navigation');
-            setTimeout(() => {
-                navigate('/userpage');
-                PerformanceDebugger.end('User Navigation');
-                PerformanceDebugger.end('Total Login Process');
-            }, 300);
+            navigate('/userpage');
             
         } catch (error) {
-            PerformanceDebugger.end('Total Login Process');
             console.error("Login error:", error);
             
             // Improved error handling
@@ -313,17 +166,6 @@ export default function Login() {
         <>
             <Navbar />
 
-            {/* Transition Loading Overlay */}
-            {showTransition && (
-                <TransitionLoading 
-                    message={
-                        isAdminCredentials(email, password) 
-                            ? "Setting up admin dashboard..." 
-                            : "Setting up your account..."
-                    } 
-                />
-            )}
-
             <div className="bg-[#FFFFFF] flex items-center justify-center mb-10">
                 <div className="h-screen w-screen mt-15">
                     <div className="text-center mb-8">
@@ -333,13 +175,6 @@ export default function Login() {
                         <p className="text-amber-800 font-normal text-md">
                             Sign in to your MelAnu account
                         </p>
-                        
-                        {/* Connection Speed Indicator */}
-                        {connectionSpeed === 'slow' && (
-                            <div className="mt-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1 inline-block">
-                                🐌 Slow connection detected
-                            </div>
-                        )}
                     </div>
 
                     <div className="bg-white flex items-center justify-center p-4">
@@ -365,7 +200,7 @@ export default function Login() {
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
-                                            disabled={loading || showTransition}
+                                            disabled={loading}
                                             className="w-full px-3 py-2 border border-amber-400 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed" />
                                     </div>
 
@@ -378,12 +213,12 @@ export default function Login() {
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
-                                                disabled={loading || showTransition}
+                                                disabled={loading}
                                                 className="w-full px-3 py-2 pr-10 border border-amber-400 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed" />
                                             <button 
                                                 type="button" 
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                disabled={loading || showTransition}
+                                                disabled={loading}
                                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer disabled:cursor-not-allowed">
                                                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />} 
                                             </button>
@@ -395,7 +230,7 @@ export default function Login() {
                                             <input
                                                 type="checkbox"
                                                 id="rememberMe"
-                                                disabled={loading || showTransition}
+                                                disabled={loading}
                                                 className="h-3 w-3 text-amber-600 focus:ring-amber-500 border-gray-300 rounded disabled:opacity-50" />
 
                                             <label htmlFor="rememberMe" className="ml-2 text-sm text-amber-600">
@@ -411,16 +246,14 @@ export default function Login() {
 
                                     <button
                                         type="submit"
-                                        disabled={loading || showTransition}
+                                        disabled={loading}
                                         className="w-full bg-amber-600 text-white py-3 cursor-pointer rounded-md hover:bg-amber-700 transition-colors font-medium disabled:bg-amber-400 disabled:cursor-not-allowed"
                                     >
                                         {loading ? (
                                             <div className="flex items-center justify-center">
                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                {connectionSpeed === 'slow' ? "Signing In... (Slow Connection)" : "Signing In..."}
+                                                Signing In...
                                             </div>
-                                        ) : showTransition ? (
-                                            "Redirecting..."
                                         ) : (
                                             "Sign In"
                                         )}
