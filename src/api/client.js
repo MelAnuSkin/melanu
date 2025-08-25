@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_BASE_URL || 'https://skin-care-mel-api.onrender.com'
+    baseURL: import.meta.env.VITE_BASE_URL
 });
 
 export const apiFetcher = async (url) => {

@@ -138,7 +138,7 @@ export default function Blog() {
                                         Step into the heart of local shea butter making, where skilled hands, generations of knowledge, and raw shea nuts come together to create one of nature's richest skincare treasures.
                                     </p>
 
-                                    <Link to='https://www.instagram.com/reel/DHJAdyiM_6f/?igsh=cW4xdXI2aDJmbndt'>
+                                    <Link to='https://www.instagram.com/reel/DHJAdyiM_6f/?igsh=cW4xdXI2aDJmbndt' target='_blank'>
                                         <button className="text-amber-600 hover:text-amber-700 font-medium text-sm inline-flex items-center cursor-pointer transition-colors">
                                             Read More
                                             <ArrowRight className="w-3 h-3 ml-1"/>
@@ -176,7 +176,7 @@ export default function Blog() {
                                         For soft, radiant skin, go beyond lotion—reach for body butter enriched with natural oils. Just a small scoop locks in moisture, boosts elasticity, and leaves your skin feeling luxuriously smooth all day long.
                                     </p>
 
-                                    <Link to='https://www.instagram.com/p/C3m-BjTMs5u/?igsh=MTB4bWxhZ290aWFiOA=='>
+                                    <Link to='https://www.instagram.com/p/C3m-BjTMs5u/?igsh=MTB4bWxhZ290aWFiOA==' target='_blank'>
                                         <button className="text-amber-600 hover:text-amber-700 font-medium text-sm inline-flex items-center cursor-pointer transition-colors">
                                             Read More
                                             <ArrowRight className="w-3 h-3 ml-1"/>
