@@ -39,11 +39,11 @@ export default function About() {
         };
     }, []);
 
-    // Newsletter subscription handler
+    
     const handleNewsletterSubmit = async (e) => {
         e.preventDefault();
         
-        // Clear previous messages
+        
         setError("");
         setMessage("");
 
@@ -73,7 +73,7 @@ export default function About() {
             
             if (response.status === 200 || response.status === 201) {
                 setMessage("Successfully subscribed to our newsletter! Check your email for confirmation.");
-                setEmail(""); // Clear the email input
+                setEmail(""); 
             }
         } catch (error) {
             if (error.response?.status === 401) {

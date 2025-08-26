@@ -390,7 +390,7 @@ export const getAllContactMessages = async (token) => {
     }
 };
 
-// Reply to Contact Message function
+
 export const replyToMessage = async (messageId, replyMessage, token) => {
     try {
         console.log('Replying to message:', { messageId, replyMessage });
