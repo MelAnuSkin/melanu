@@ -573,8 +573,7 @@ export default function Admin() {
       setReplyLoading(true);
       console.log('Sending reply with full replyData object:', replyData);
 
-      // Extract the reply message from replyData
-      // The ReplyModal sends: { to, subject, message, originalMessage }
+     
       const replyMessage = replyData.message;
       const messageId = replyData.originalMessage._id;
 
@@ -605,7 +604,6 @@ export default function Admin() {
         tokenExists: !!token
       });
 
-      // Call the actual API to send the reply
       const response = await replyToMessage(
         messageId,
         replyMessage.trim(),
@@ -682,11 +680,11 @@ export default function Admin() {
           }
         }
 
-        // Call the actual API to delete the message
+     
         const response = await deleteContactMessage(messageId, token);
 
         if (response.status === 200 || response.status === 204) {
-          // Remove message from local state
+       
           setMessages(prevMessages => prevMessages.filter(msg => msg._id !== messageId));
           alert('Message deleted successfully!');
         }
@@ -968,7 +966,7 @@ export default function Admin() {
         {/* Header */}
         <Header handleLogout={handleLogout} />
 
-        {/* Stats Overview - Add this section */}
+       
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <StatsCard

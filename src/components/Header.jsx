@@ -25,7 +25,7 @@ export default function Header({ handleLogout }) {
               </p>
               <button
                 onClick={handleLogout}
-                className="flex items-center justify-center sm:justify-start gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition-colors text-sm sm:text-base w-full sm:w-auto"
+                className="flex items-center justify-center cursor-pointer sm:justify-start gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition-colors text-sm sm:text-base w-full sm:w-auto"
               >
                 <LogOut size={16} />
                 Logout
