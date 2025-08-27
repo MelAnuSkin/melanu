@@ -8,7 +8,7 @@ export default function ProductGrid({ onCartUpdate }) {
     const [loading, setLoading] = useState(true);
     const [addingToCart, setAddingToCart] = useState(null);
     
-    // Search states
+   
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All Products");
     const [searchResults, setSearchResults] = useState([]);
@@ -17,7 +17,7 @@ export default function ProductGrid({ onCartUpdate }) {
     const [isSearchActive, setIsSearchActive] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    // Check authentication
+    
     useEffect(() => {
         const checkAuth = () => {
             const token = localStorage.getItem('token');
@@ -54,13 +54,14 @@ export default function ProductGrid({ onCartUpdate }) {
                     price: product.price,
                     bgImage: product.imageUrl || product.image,
                     category: product.category,
+                    description: product.description || "No description available",
                     originalProduct: product // Keep original for search
                 }));
                 
                 setApiProducts(transformedProducts);
                 setLoading(false);
             } catch (error) {
-                console.error('❌ Error fetching products:', error);
+                console.error('Error fetching products:', error);
                 setLoading(false);
             }
         };
@@ -92,13 +93,13 @@ export default function ProductGrid({ onCartUpdate }) {
             const products = response.data;
             
             if (products && Array.isArray(products)) {
-                // Transform search results to match component structure
                 const transformedSearchResults = products.map(product => ({
                     id: product._id || product.id,
                     name: product.name,
                     price: product.price,
                     bgImage: product.imageUrl || product.image,
                     category: product.category,
+                    description: product.description || "No description available",
                     originalProduct: product
                 }));
                 
@@ -130,12 +131,11 @@ export default function ProductGrid({ onCartUpdate }) {
         }
     };
 
-    // Handle search by category
     const handleCategoryChange = async (category) => {
-        console.log('📂 Category selected:', category);
+        console.log('Category selected:', category);
         
         setSelectedCategory(category);
-        setSearchTerm(""); // Clear search term when changing category
+        setSearchTerm(""); 
         
         if (category === "All Products") {
             setIsSearchActive(false);
@@ -155,8 +155,7 @@ export default function ProductGrid({ onCartUpdate }) {
 
         try {
             const token = localStorage.getItem('token');
-            
-            // Map display names to API category names - let's check what categories exist in your products
+    
             const categoryMap = {
                 "Face Care": "Skincare",
                 "Body Care": "Body Care", 
@@ -165,47 +164,47 @@ export default function ProductGrid({ onCartUpdate }) {
             };
             
             const apiCategory = categoryMap[category] || category;
-            console.log('📂 Mapped category for API:', apiCategory);
-            console.log('📂 Available categories in all products:', [...new Set(apiProducts.map(p => p.category))]);
+            console.log('Mapped category for API:', apiCategory);
+            console.log('Available categories in all products:', [...new Set(apiProducts.map(p => p.category))]);
             
             const response = await searchProductsByCategory(apiCategory, token);
-            console.log('📦 Category search response:', response);
-            console.log('📦 Category search response data:', response.data);
+            console.log('Category search response:', response);
+            console.log('Category search response data:', response.data);
             
             const products = response.data;
             
             if (products && Array.isArray(products)) {
-                console.log('📊 Raw category results:', products);
-                
-                // Transform search results to match component structure
+                console.log('Raw category results:', products);
+
                 const transformedSearchResults = products.map(product => ({
                     id: product._id || product.id,
                     name: product.name,
                     price: product.price,
                     bgImage: product.imageUrl || product.image,
                     category: product.category,
+                    description: product.description || "No description available",
                     originalProduct: product
                 }));
                 
-                console.log('✅ Transformed category results:', transformedSearchResults);
+                console.log('Transformed category results:', transformedSearchResults);
                 setSearchResults(transformedSearchResults);
                 
                 if (transformedSearchResults.length === 0) {
-                    console.log('❌ No products found for category:', apiCategory);
+                    console.log('No products found for category:', apiCategory);
                     setError(`No products found in "${category}" category`);
                 } else {
-                    console.log(`🎉 Found ${transformedSearchResults.length} product(s) in "${category}" category`);
+                    console.log(`Found ${transformedSearchResults.length} product(s) in "${category}" category`);
                     setError("");
                 }
             } else {
-                console.error('❌ Unexpected response format for category search:', typeof products, products);
+                console.error('Unexpected response format for category search:', typeof products, products);
                 setError("Unexpected response format from server");
                 setSearchResults([]);
             }
         } catch (error) {
-            console.error('💥 Category search error:', error);
-            console.error('💥 Error response:', error.response);
-            console.error('💥 Error response data:', error.response?.data);
+            console.error('Category search error:', error);
+            console.error('Error response:', error.response);
+            console.error('Error response data:', error.response?.data);
             
             if (error.response?.status === 401) {
                 setError("Please log in again to filter products");
@@ -223,18 +222,16 @@ export default function ProductGrid({ onCartUpdate }) {
         }
     };
 
-    // Handle search input change with debouncing
     useEffect(() => {
         const delayedSearch = setTimeout(() => {
             if (searchTerm && selectedCategory === "All Products") {
                 handleSearchByName(searchTerm);
             }
-        }, 500); // 500ms delay for debouncing
+        }, 500); 
 
         return () => clearTimeout(delayedSearch);
     }, [searchTerm, isAuthenticated]);
 
-    // Clear search when search term is empty
     useEffect(() => {
         if (!searchTerm && selectedCategory === "All Products") {
             setIsSearchActive(false);
@@ -243,7 +240,7 @@ export default function ProductGrid({ onCartUpdate }) {
         }
     }, [searchTerm, selectedCategory]);
 
-    // Add to cart function
+    
     const handleAddToCart = async (product) => {
         const token = localStorage.getItem('token');
         const isAuth = localStorage.getItem('isAuthenticated');
@@ -281,7 +278,6 @@ export default function ProductGrid({ onCartUpdate }) {
         }
     };
 
-    // Buy now function
     const handleBuyNow = (product) => {
         const token = localStorage.getItem('token');
         const isAuth = localStorage.getItem('isAuthenticated');
@@ -294,7 +290,6 @@ export default function ProductGrid({ onCartUpdate }) {
         window.location.href = '/checkout';
     };
 
-    // Determine which products to display
     const displayProducts = isSearchActive ? searchResults : apiProducts;
 
     if (loading) {
@@ -470,7 +465,7 @@ export default function ProductGrid({ onCartUpdate }) {
                         {displayProducts.map((product) => (
                             <div 
                                 key={product.id} 
-                                className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:scale-105 transform transition-transform duration-300"
+                                className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl hover:scale-105 transform transition-all duration-300"
                             >
                                 <div className="relative">
                                     <img 
@@ -480,30 +475,37 @@ export default function ProductGrid({ onCartUpdate }) {
                                     />
                                 </div>
                                 
-                                <div className="p-4">
-                                    <div className="text-xs text-gray-600 font-medium mb-2 uppercase tracking-wide">
+                                <div className="p-5">
+                                    {/* Category Badge */}
+                                    <div className="inline-block bg-amber-100 text-amber-800 text-xs font-semibold px-2 py-1 rounded-full uppercase tracking-wide mb-3">
                                         {product.category}
                                     </div>
                                 
-                                    <h3 className="text-amber-600 font-serif font-semibold mb-3 line-clamp-2">
+                                    {/* Product Name */}
+                                    <h3 className="text-amber-900 font-serif font-bold text-lg mb-3 line-clamp-2 leading-tight">
                                         {product.name}
                                     </h3>
                                     
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="text-lg font-semibold text-amber-900">
+                                    {/* Product Description */}
+                                    <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                                        {product.description}
+                                    </p>
+                                    
+                                    {/* Price */}
+                                    <div className="flex items-center justify-between mb-4">
+                                        <span className="text-2xl font-bold text-amber-900">
                                             GH₵{product.price}
                                         </span>
                                     </div>
 
-                                    {/* Button Container */}
+                                    {/* Add to Cart Button */}
                                     <div className="flex flex-col gap-2">
-                                        
                                         <button 
                                             onClick={() => handleAddToCart(product)}
                                             disabled={addingToCart === product.id}
-                                            className="bg-amber-600 hover:bg-amber-700 text-white cursor-pointer px-4 py-2 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="bg-amber-600 hover:bg-amber-700 text-white font-semibold cursor-pointer px-6 py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                                         >
-                                            <ShoppingCart size={16} />
+                                            <ShoppingCart size={18} />
                                             {addingToCart === product.id ? 'Adding...' : 'Add to Cart'}
                                         </button>
                                     </div>
