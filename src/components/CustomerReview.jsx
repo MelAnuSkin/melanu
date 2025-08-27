@@ -2,15 +2,20 @@ import { Link } from "react-router"
 
 const reviews = [
     {
-        name: "Ama Amponsah",
-        role: "Verified Customer",
-        review: "The shea butter cream is absolutely amazing! My skin has never felt softer. I love knowing that my purchase supports women entrepreneurs in Ghana."
+        name: "Hawa Issifu",
+        role: "Customer",
+        review: "I love sunrise body butter it smooth and smell so nice, and brother loved it, he keep asking me to buy for him."
     },
     {
-        name: "Elsie Owusu",
-        role: "Skincare Enthusiast",
-        review: "I've been using MelAnu products for 6 months now and the quality is exceptional. The natural ingredients work wonders on my sensitive skin."
+        name: "Odelia Soga",
+        role: "Customer",
+        review: "MelAnu's products are amazing! The Hair + Scalp Treatment Tonic promotes hair growth, adds shine, and soothes my scalp. And the Sunrise Roast Body Butter smells incredible and leaves my skin soft and moisturized. I'm loving the whole range!"
     },
+    {
+        name: "Valentine Viel",
+        role: "Customer",
+        review: "I started using sunshine roast from the very first batch and honestly my skin hasn't looked any better up till then.The chocolate smell make the body butter almost eatable and the compliments just keep coming. The beard growth serum is soo effective and it also smells nice, my beard looks soo lush and full now all thanks to the beard oil.I highly recommend MelAnu skinfident all natural products for all especially anyone who wishes to enhance the beauty in their natural skin tone."
+    }
 ]
 
 export default function CustomerReview() {
