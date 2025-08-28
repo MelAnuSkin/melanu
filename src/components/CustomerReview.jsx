@@ -15,6 +15,11 @@ const reviews = [
         name: "Valentine Viel",
         role: "Customer",
         review: "I started using sunshine roast from the very first batch and honestly my skin hasn't looked any better up till then.The chocolate smell make the body butter almost eatable and the compliments just keep coming. The beard growth serum is soo effective and it also smells nice, my beard looks soo lush and full now all thanks to the beard oil.I highly recommend MelAnu skinfident all natural products for all especially anyone who wishes to enhance the beauty in their natural skin tone."
+    },
+    {
+        name: "Aaron Kan Tamakloe",
+        role: "Customer",
+        review: "It feels more like skin relaxation and glows, it smells nice and comfy. I like it, but sometimes I forget to apply it constantly. It still does its job well."
     }
 ]
 
